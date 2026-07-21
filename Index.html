@@ -35,8 +35,8 @@
 <body>
 
     <div>
-        <button class="btn" onclick="sendTrigger()">Upload Claims...</button>
-        <p id="status">Press button to Continue...</p>
+        <button class="btn" onclick="sendTrigger()">Upload Claims</button>
+        <p id="status"></p>
     </div>
     
     <script>
@@ -55,7 +55,7 @@
             .then(() => {
                 // Note: with 'no-cors', response is opaque, but the request sent successfully!
                 status.innerText = "Process Initiated!";
-                setTimeout(() => status.innerText = "Again...",5000);
+                setTimeout(() => status.innerText = "",3000);
             })
             .catch(error => {
                 status.innerText = "Error Occured.";
