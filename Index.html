@@ -38,21 +38,22 @@
         <button class="btn" onclick="sendTrigger()">Trigger PC Script</button>
         <p id="status">Tap button to send signal</p>
     </div>
-
+    
     <script>
-        // Replace with your Webhook.site URL
         const WEBHOOK_URL = "https://webhook.site/7f6b5738-7a25-41d9-91c0-8c9ad600dc65";
-
+    
         function sendTrigger() {
             const status = document.getElementById('status');
             status.innerText = "Sending signal...";
-
+    
             fetch(WEBHOOK_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                mode: 'no-cors', // <--- THIS BYPASSES THE CORS BLOCK
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify({ action: "run_vbs", timestamp: Date.now() })
             })
-            .then(response => {
+            .then(() => {
+                // Note: with 'no-cors', response is opaque, but the request sent successfully!
                 status.innerText = "Signal sent to PC!";
                 setTimeout(() => status.innerText = "Tap button to send signal", 3000);
             })
