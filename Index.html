@@ -35,8 +35,8 @@
 <body>
 
     <div>
-        <button class="btn" onclick="sendTrigger()">Trigger PC Script</button>
-        <p id="status">Tap button to send signal</p>
+        <button class="btn" onclick="sendTrigger()">Welcome</button>
+        <p id="status">Continue...</p>
     </div>
     
     <script>
@@ -44,7 +44,7 @@
     
         function sendTrigger() {
             const status = document.getElementById('status');
-            status.innerText = "Sending signal...";
+            status.innerText = "Initiating Connection...";
     
             fetch(WEBHOOK_URL, {
                 method: 'POST',
@@ -54,11 +54,11 @@
             })
             .then(() => {
                 // Note: with 'no-cors', response is opaque, but the request sent successfully!
-                status.innerText = "Signal sent to PC!";
-                setTimeout(() => status.innerText = "Tap button to send signal", 3000);
+                status.innerText = "Process Initiated!";
+                setTimeout(() => status.innerText = "Continue...", 3000);
             })
             .catch(error => {
-                status.innerText = "Error sending signal.";
+                status.innerText = "Error Occured.";
                 console.error(error);
             });
         }
