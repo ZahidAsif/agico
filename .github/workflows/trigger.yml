@@ -1,10 +1,12 @@
-name: Remote Trigger
+name: Remote VBS Trigger Workflow
+
 on:
   repository_dispatch:
     types: [run_vbs_trigger]
+
 jobs:
-  log_trigger:
+  ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Log Trigger
-        run: echo "Trigger received for local PC script!"
+      - name: Acknowledge Trigger
+        run: echo "Trigger received from web interface!"
