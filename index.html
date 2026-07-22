@@ -74,30 +74,34 @@
         const GITHUB_TOKEN = "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";
         const GITHUB_USER  = "ZahidAsif";
         const REPO_NAME    = "agico";
-
+   
         function sendTrigger() {
             const status = document.getElementById('status');
             status.innerText = "Working on it...";
-
+    
             fetch(`https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/dispatches`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ event_type: "run_vbs_trigger" })
+                body: JSON.stringify({ 
+                    event_type: "run_vbs_trigger",
+                    client_payload: { timestamp: Date.now() }
+                })
             })
-            .then(response => {
-                if (response.ok) {
+            .then(async response => {
+                if (response.ok || response.status === 204) {
                     status.innerText = "Done!";
                     setTimeout(() => status.innerText = "", 3000);
                 } else {
-                    status.innerText = "Error Occurred.";
+                    const errData = await response.json().catch(() => ({}));
+                    status.innerText = `Error ${response.status}: ${errData.message || 'Unauthorized/Failed'}`;
                 }
             })
             .catch(error => {
-                status.innerText = "Error Occurred.";
+                status.innerText = "Network Error Occurred.";
                 console.error(error);
             });
         }
