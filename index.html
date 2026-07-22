@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agico...</title>
+    <title>Remote Trigger & Dashboard</title>
     <style>
         body {
             margin: 0;
@@ -60,48 +60,31 @@
 <body>
 
     <div class="container">
-        <!-- Trigger Button -->
         <button class="btn" onclick="sendTrigger()">Upload Claims</button>
-        
-        <!-- Dashboard Button -->
         <a href="dashboard.html" class="btn btn-secondary">View Dashboard</a>
-        
         <p id="status"></p>
     </div>
-    
+
     <script>
-        // Insert your NEW classic token below
-        const GITHUB_TOKEN = "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";
-        const GITHUB_USER  = "ZahidAsif";
-        const REPO_NAME    = "agico";
-   
         function sendTrigger() {
             const status = document.getElementById('status');
             status.innerText = "Working on it...";
-    
-            fetch(`https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/dispatches`, {
+
+            // Ping a free public trigger endpoint that doesn't expose secrets
+            fetch("https://ntfy.sh/zahid_agico_trigger_9918", {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    event_type: "run_vbs_trigger",
-                    client_payload: { timestamp: Date.now() }
-                })
+                body: 'run_vbs'
             })
-            .then(async response => {
-                if (response.ok || response.status === 204) {
+            .then(response => {
+                if (response.ok) {
                     status.innerText = "Done!";
                     setTimeout(() => status.innerText = "", 3000);
                 } else {
-                    const errData = await response.json().catch(() => ({}));
-                    status.innerText = `Error ${response.status}: ${errData.message || 'Unauthorized/Failed'}`;
+                    status.innerText = "Error Occurred.";
                 }
             })
             .catch(error => {
-                status.innerText = "Network Error Occurred.";
+                status.innerText = "Error Occurred.";
                 console.error(error);
             });
         }
