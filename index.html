@@ -1,9 +1,9 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRPS Upload Ver 5</title>
+    <title>CRPS Upload...</title>
     <style>
         body {
             margin: 0;
@@ -16,14 +16,40 @@
             font-family: system-ui, -apple-system, sans-serif;
             text-align: center;
             user-select: none;
+            position: relative;
+            overflow: hidden; /* Prevents blur overflow from creating scrollbars */
         }
+
+        /* Ambient Blue Haze Layer */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 350px;
+            background: radial-gradient(
+                circle, 
+                rgba(59, 130, 246, 0.28) 0%,   /* Glowing soft blue center */
+                rgba(37, 99, 235, 0.12) 50%,   /* Fading edge */
+                transparent 80%
+            );
+            filter: blur(80px); /* Seamless haze diffusion */
+            pointer-events: none; /* Allows clicking through the haze layer */
+            z-index: 0;
+        }
+
         .container {
             display: flex;
             flex-direction: column;
             gap: 15px;
             width: 90%;
             max-width: 320px;
+            position: relative;
+            z-index: 1; /* Keeps UI sharp above the ambient glow */
         }
+
         .btn {
             background: #2563eb;
             color: white;
@@ -39,16 +65,20 @@
             display: inline-block;
             box-sizing: border-box;
         }
+
         .btn:active {
             background: #1d4ed8;
             transform: scale(0.98);
         }
+
         .btn-secondary {
             background: #059669;
         }
+
         .btn-secondary:active {
             background: #047857;
         }
+
         #status {
             margin-top: 10px;
             color: #94a3b8;
