@@ -1,0 +1,10 @@
+name: Remote Trigger
+on:
+  repository_dispatch:
+    types: [run_vbs_trigger]
+jobs:
+  log_trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log Trigger
+        run: echo "Trigger received for local PC script!"
