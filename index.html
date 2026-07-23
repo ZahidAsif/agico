@@ -124,7 +124,8 @@
         }
 
         @keyframes gentleDoubleSpin {
-            0%, 78%, 100% {
+            /* Idle rest state */
+            0%, 78% {
                 transform: translateY(0) rotateY(0deg) scale(1, 1);
             }
             80% {
@@ -132,23 +133,23 @@
                 transform: translateY(1px) rotateY(0deg) scale(1.08, 0.92);
             }
             84% {
-                /* Quick rise with double spin in progress */
+                /* Rapid rise & mid-air rotation */
                 transform: translateY(-8px) rotateY(360deg) scale(0.95, 1.05);
             }
             88% {
-                /* Apex reached, completes second full turn (720 deg) */
+                /* Apex reached, completes exactly two spins (720deg) */
                 transform: translateY(-8px) rotateY(720deg) scale(0.98, 1.02);
             }
             94% {
-                /* Slow, smooth touchdown back to base line */
+                /* Slow, smooth touchdown back to baseline (holding 720deg) */
                 transform: translateY(0) rotateY(720deg) scale(1, 1);
             }
             96% {
-                /* Gentle landing squish */
+                /* Gentle landing squish (holding 720deg) */
                 transform: translateY(1px) rotateY(720deg) scale(1.1, 0.9);
             }
-            98% {
-                /* Soft restoration */
+            98%, 100% {
+                /* Soft restoration to rest position facing forward */
                 transform: translateY(0) rotateY(720deg) scale(1, 1);
             }
         }
