@@ -195,7 +195,6 @@
 
         .btn:active { transform: translateY(0) scale(0.98); }
 
-        /* Processing Terminal / Console Box */
         .console-container {
             width: 100%;
             height: 110px;
@@ -214,9 +213,7 @@
             gap: 4px;
         }
 
-        .console-container::-webkit-scrollbar {
-            width: 4px;
-        }
+        .console-container::-webkit-scrollbar { width: 4px; }
         .console-container::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.2);
             border-radius: 4px;
@@ -263,7 +260,6 @@
             100% { transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 4px rgba(16, 185, 129, 0.3); }
         }
 
-        /* Modal Overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -402,7 +398,6 @@
         </div>
     </div>
 
-    <!-- Security PIN Modal -->
     <div id="pinModal" class="modal-overlay">
         <div class="modal-card">
             <h3>Enter Security PIN</h3>
@@ -414,7 +409,6 @@
         </div>
     </div>
 
-    <!-- Fullscreen Floating Toggle Button -->
     <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Toggle Fullscreen">
         <svg class="icon-enter" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
@@ -426,10 +420,12 @@
 
     <script>
         const GITHUB_USER = "ZahidAsif";
-        const TRIGGER_GIST_ID = "YOUR_TRIGGER_GIST_ID_HERE"; // Put your Trigger Gist ID here
+        const TRIGGER_GIST_ID = "YOUR_TRIGGER_GIST_ID_HERE";
         const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
 
         let isActionInProgress = false;
+        let activeToken = null;
+        let pollIntervalId = null;
         let lastConsoleContent = "";
 
         function logToConsole(message) {
@@ -438,10 +434,16 @@
             consoleBox.scrollTop = consoleBox.scrollHeight;
         }
 
-        // Poll Python status updates from Gist
+        // Authenticated live log fetcher
         async function fetchLiveLogs() {
+            if (!activeToken) return;
+
             try {
-                const res = await fetch(`https://api.github.com/gists/${TRIGGER_GIST_ID}?nocache=${Date.now()}`);
+                const res = await fetch(`https://api.github.com/gists/${TRIGGER_GIST_ID}`, {
+                    headers: { 'Authorization': `token ${activeToken}` },
+                    cache: 'no-store'
+                });
+
                 if (res.ok) {
                     const data = await res.json();
                     if (data.files && data.files["status.txt"]) {
@@ -453,12 +455,22 @@
                     }
                 }
             } catch (err) {
-                // Keep subtle if network glitches
+                // Silently handle transient errors
             }
         }
 
-        // Poll Gist every 3 seconds for log updates from your PC
-        setInterval(fetchLiveLogs, 3000);
+        function startLogPolling() {
+            if (pollIntervalId) clearInterval(pollIntervalId);
+            fetchLiveLogs();
+            pollIntervalId = setInterval(fetchLiveLogs, 4000); // Check every 4 seconds authenticated
+        }
+
+        function stopLogPolling() {
+            if (pollIntervalId) {
+                clearInterval(pollIntervalId);
+                pollIntervalId = null;
+            }
+        }
 
         async function verifyGitHubAccess() {
             if (!navigator.onLine) return false;
@@ -496,7 +508,7 @@
             }
         }
 
-        setInterval(updateConnectionStatus, 5000);
+        setInterval(updateConnectionStatus, 10000);
         window.addEventListener('online', updateConnectionStatus);
         window.addEventListener('offline', updateConnectionStatus);
         updateConnectionStatus();
@@ -537,9 +549,9 @@
             status.innerText = "Authenticating...";
             logToConsole("Authenticating PIN...");
 
-            const decryptedToken = await decryptToken(pin);
+            activeToken = await decryptToken(pin);
 
-            if (!decryptedToken) {
+            if (!activeToken) {
                 alert("Incorrect Security PIN, Sir.");
                 status.innerText = "Access Denied";
                 logToConsole("Authentication failed: Invalid PIN.");
@@ -551,7 +563,7 @@
                 return;
             }
 
-            await sendTrigger(decryptedToken);
+            await sendTrigger(activeToken);
         }
 
         async function decryptToken(pin) {
@@ -605,14 +617,18 @@
                     status.innerText = "Command Sent!";
                     logToConsole("Command received. Waiting for PC execution updates...");
                     dot.className = 'status-dot online';
+                    
+                    // Start authenticated polling after triggering command
+                    startLogPolling();
+
                     setTimeout(() => {
                         isActionInProgress = false;
                         updateConnectionStatus();
                     }, 3000);
                 } else {
                     const err = await putRes.json().catch(() => ({}));
-                    status.innerText = `Error: ${err.message || 'Unauthorized'}`;
-                    logToConsole(`Error sending command: ${err.message || 'Unauthorized'}`);
+                    status.innerText = `Error: ${err.message || 'Rate Limited'}`;
+                    logToConsole(`Error: ${err.message || 'API Limit reached. Wait 60 minutes.'}`);
                     dot.className = 'status-dot offline';
                     setTimeout(() => {
                         isActionInProgress = false;
