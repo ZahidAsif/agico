@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRPS Upload</title>
+    <title>CRPS Upload...</title>
     <style>
         * {
             box-sizing: border-box;
@@ -208,7 +208,7 @@
         </div>
 
         <div class="btn-group">
-            <button class="btn btn-primary" onclick="sendTrigger()">
+            <button class="btn btn-primary" onclick="handleProtectedUpload()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 Upload Claims
             </button>
@@ -226,30 +226,74 @@
     </div>
 
     <script>
-        const T1 = "ghp_ELrogynl3SyCfPS"; 
-        const T2 = "3J2OSrVrRNPNtNc0Rf2dw";
+        const GITHUB_USER = "ZahidAsif";
+        const REPO_NAME   = "agico";
 
-        const GITHUB_TOKEN = T1 + T2;
-        const GITHUB_USER  = "ZahidAsif";
-        const REPO_NAME    = "agico";
+        // EMBEDDED ENCRYPTED PAYLOAD
+        const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
 
-        async function sendTrigger() {
+        // Decrypts the token in memory using PBKDF2 + AES-GCM
+        async function decryptToken(pin) {
+            try {
+                const enc = new TextEncoder();
+                const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+                const key = await crypto.subtle.deriveKey(
+                    { name: "PBKDF2", salt: new Uint8Array(ENCRYPTED_DATA.salt), iterations: 100000, hash: "SHA-256" },
+                    keyMaterial,
+                    { name: "AES-GCM", length: 256 },
+                    false,
+                    ["decrypt"]
+                );
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: new Uint8Array(ENCRYPTED_DATA.iv) },
+                    key,
+                    new Uint8Array(ENCRYPTED_DATA.ciphertext)
+                );
+                return new TextDecoder().decode(decrypted);
+            } catch (e) {
+                return null; // Invalid PIN
+            }
+        }
+
+        async function handleProtectedUpload() {
             const status = document.getElementById('status');
             const dot = document.getElementById('dot');
-            
-            status.innerText = "Initiating command...";
+
+            const pin = prompt("Sir, please enter your Master Security PIN:");
+            if (!pin) return;
+
+            status.innerText = "Authenticating...";
             dot.classList.add('active');
+
+            const decryptedToken = await decryptToken(pin.trim());
+
+            if (!decryptedToken) {
+                alert("Incorrect Security PIN, Sir.");
+                status.innerText = "Access Denied";
+                dot.classList.remove('active');
+                return;
+            }
+
+            await sendTrigger(decryptedToken);
+        }
+
+        async function sendTrigger(token) {
+            const status = document.getElementById('status');
+            const dot = document.getElementById('dot');
+
+            status.innerText = "Initiating command...";
 
             try {
                 const fileUrl = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/trigger.txt`;
-                
+
                 let sha = "";
                 const getRes = await fetch(fileUrl, {
                     headers: { 
-                        'Authorization': `token ${GITHUB_TOKEN.trim()}`,
+                        'Authorization': `token ${token}`,
                         'Accept': 'application/vnd.github.v3+json'
                     }
                 });
+
                 if (getRes.ok) {
                     const fileData = await getRes.json();
                     sha = fileData.sha;
@@ -258,7 +302,7 @@
                 const putRes = await fetch(fileUrl, {
                     method: 'PUT',
                     headers: {
-                        'Authorization': `token ${GITHUB_TOKEN.trim()}`,
+                        'Authorization': `token ${token}`,
                         'Accept': 'application/vnd.github.v3+json',
                         'Content-Type': 'application/json'
                     },
