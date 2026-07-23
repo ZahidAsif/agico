@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRPS Upload...</title>
+    <title>CRPS Upload</title>
     <style>
         * {
             box-sizing: border-box;
@@ -194,6 +194,92 @@
             from { opacity: 0.4; }
             to { opacity: 1; }
         }
+
+        /* Masked Password Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 28px 24px;
+            width: 90%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f8fafc;
+            text-align: center;
+        }
+
+        .pin-input {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            letter-spacing: 4px;
+            text-align: center;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .pin-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+
+        .modal-btn-confirm {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .modal-btn-cancel {
+            background: rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
@@ -208,7 +294,7 @@
         </div>
 
         <div class="btn-group">
-            <button class="btn btn-primary" onclick="handleProtectedUpload()">
+            <button class="btn btn-primary" onclick="openPinModal()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 Upload Claims
             </button>
@@ -225,13 +311,59 @@
         </div>
     </div>
 
+    <!-- Masked PIN Input Modal -->
+    <div id="pinModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3>Enter Security PIN</h3>
+            <input type="password" id="pinInput" class="pin-input" placeholder="••••" autocomplete="off" onkeydown="if(event.key==='Enter') submitPin()" />
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-cancel" onclick="closePinModal()">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" onclick="submitPin()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const GITHUB_USER = "ZahidAsif";
         const REPO_NAME   = "agico";
 
         // EMBEDDED ENCRYPTED PAYLOAD
-        const ENCRYPTED_DATA = {"salt":[205,48,145,115,87,14,178,6,253,182,122,4,33,88,229,215],"iv":[78,160,38,173,205,123,62,100,92,222,123,158],"ciphertext":[61,70,203,32,253,165,83,213,178,178,187,244,212,125,243,139,214,139,85,73,197,85,108,101,217,189,51,230,176,167,105,252,243,37,180,58,125,137,66,255,115,200,39,100,105,110,247,27,231,68,21,38,235,231,41,207]}
-        // Decrypts the token in memory using PBKDF2 + AES-GCM
+        const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
+
+        function openPinModal() {
+            const input = document.getElementById('pinInput');
+            input.value = '';
+            document.getElementById('pinModal').classList.add('open');
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closePinModal() {
+            document.getElementById('pinModal').classList.remove('open');
+        }
+
+        async function submitPin() {
+            const pin = document.getElementById('pinInput').value.trim();
+            closePinModal();
+            if (!pin) return;
+
+            const status = document.getElementById('status');
+            const dot = document.getElementById('dot');
+
+            status.innerText = "Authenticating...";
+            dot.classList.add('active');
+
+            const decryptedToken = await decryptToken(pin);
+
+            if (!decryptedToken) {
+                alert("Incorrect Security PIN, Sir.");
+                status.innerText = "Access Denied";
+                dot.classList.remove('active');
+                return;
+            }
+
+            await sendTrigger(decryptedToken);
+        }
+
         async function decryptToken(pin) {
             try {
                 const enc = new TextEncoder();
@@ -250,30 +382,8 @@
                 );
                 return new TextDecoder().decode(decrypted);
             } catch (e) {
-                return null; // Invalid PIN
+                return null;
             }
-        }
-
-        async function handleProtectedUpload() {
-            const status = document.getElementById('status');
-            const dot = document.getElementById('dot');
-
-            const pin = prompt("Enter PIN:");
-            if (!pin) return;
-
-            status.innerText = "Authenticating...";
-            dot.classList.add('active');
-
-            const decryptedToken = await decryptToken(pin.trim());
-
-            if (!decryptedToken) {
-                alert("Incorrect PIN");
-                status.innerText = "Access Denied";
-                dot.classList.remove('active');
-                return;
-            }
-
-            await sendTrigger(decryptedToken);
         }
 
         async function sendTrigger(token) {
