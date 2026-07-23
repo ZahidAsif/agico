@@ -2,14 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Fixed Mobile Viewport to prevent panning/zooming shifts -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CRPS Upload</title>
 
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="agicologo.png">
 
-    <!-- Mobile Fullscreen / Web App Manifest Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
@@ -26,14 +23,14 @@
             width: 100%;
             height: 100%;
             max-width: 100vw;
-            overflow: hidden; /* Prevents unwanted panning and horizontal scrolling */
+            overflow: hidden;
         }
 
         body {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100dvh; /* Uses dynamic viewport height for mobile browsers */
+            height: 100dvh;
             background-color: #090d16;
             color: #ffffff;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -42,7 +39,6 @@
             padding: 16px;
         }
 
-        /* Animated Ambient Background Glows */
         .ambient-orb {
             position: absolute;
             border-radius: 50%;
@@ -74,7 +70,6 @@
             100% { transform: scale(1.2) translate(30px, -20px); opacity: 0.65; }
         }
 
-        /* Glass Container Card */
         .glass-card {
             position: relative;
             z-index: 10;
@@ -83,19 +78,19 @@
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 24px;
-            padding: 32px 24px;
+            padding: 28px 24px;
             width: 100%;
             max-width: 360px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
             align-items: center;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         .header h1 {
@@ -107,44 +102,26 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-
-            /* Perspective container for realistic 3D Y-axis flipping */
             perspective: 200px;
         }
 
-        /* Logo animated: Low jump, 2 fast 360° spins (720° total), smooth slow sit-down */
         .header-logo {
             height: 1.1em;
             width: auto;
             display: inline-block;
             object-fit: contain;
             transform-style: preserve-3d;
-
             animation: gentleDoubleSpin 5s cubic-bezier(0.25, 1, 0.5, 1) infinite;
         }
 
         @keyframes gentleDoubleSpin {
-            0%, 78%, 100% {
-                transform: translateY(0) rotateY(0deg) scale(1, 1);
-            }
-            80% {
-                transform: translateY(1px) rotateY(0deg) scale(1.08, 0.92);
-            }
-            84% {
-                transform: translateY(-8px) rotateY(360deg) scale(0.95, 1.05);
-            }
-            88% {
-                transform: translateY(-8px) rotateY(720deg) scale(0.98, 1.02);
-            }
-            94% {
-                transform: translateY(0) rotateY(720deg) scale(1, 1);
-            }
-            96% {
-                transform: translateY(1px) rotateY(720deg) scale(1.1, 0.9);
-            }
-            98%, 100% {
-                transform: translateY(0) rotateY(720deg) scale(1, 1);
-            }
+            0%, 78%, 100% { transform: translateY(0) rotateY(0deg) scale(1, 1); }
+            80% { transform: translateY(1px) rotateY(0deg) scale(1.08, 0.92); }
+            84% { transform: translateY(-8px) rotateY(360deg) scale(0.95, 1.05); }
+            88% { transform: translateY(-8px) rotateY(720deg) scale(0.98, 1.02); }
+            94% { transform: translateY(0) rotateY(720deg) scale(1, 1); }
+            96% { transform: translateY(1px) rotateY(720deg) scale(1.1, 0.9); }
+            98%, 100% { transform: translateY(0) rotateY(720deg) scale(1, 1); }
         }
 
         .header p {
@@ -156,15 +133,14 @@
         .btn-group {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
             width: 100%;
         }
 
-        /* Modern Buttons */
         .btn {
             position: relative;
             width: 100%;
-            padding: 16px 20px;
+            padding: 14px 20px;
             font-size: 15px;
             font-weight: 600;
             border-radius: 14px;
@@ -180,7 +156,6 @@
             letter-spacing: 0.2px;
         }
 
-        /* Subtle shine overlay on buttons */
         .btn::after {
             content: '';
             position: absolute;
@@ -192,11 +167,8 @@
             transition: 0.5s;
         }
 
-        .btn:hover::after {
-            left: 100%;
-        }
+        .btn:hover::after { left: 100%; }
 
-        /* Primary Button Style */
         .btn-primary {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             color: #ffffff;
@@ -209,7 +181,6 @@
             box-shadow: 0 12px 25px -4px rgba(37, 99, 235, 0.7);
         }
 
-        /* Secondary Button Style */
         .btn-secondary {
             background: rgba(255, 255, 255, 0.05);
             color: #e2e8f0;
@@ -222,11 +193,35 @@
             transform: translateY(-2px);
         }
 
-        .btn:active {
-            transform: translateY(0) scale(0.98);
+        .btn:active { transform: translateY(0) scale(0.98); }
+
+        /* Processing Terminal / Console Box */
+        .console-container {
+            width: 100%;
+            height: 110px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #10b981;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        /* Status Banner */
+        .console-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .console-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
         .status-container {
             display: flex;
             align-items: center;
@@ -236,7 +231,6 @@
             min-height: 20px;
         }
 
-        /* Status Indicator Dot */
         .status-dot {
             width: 8px;
             height: 8px;
@@ -245,47 +239,31 @@
             background-color: #64748b;
         }
 
-        /* Online Status: Breathing Green Glow */
         .status-dot.online {
             background-color: #10b981;
             box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
             animation: breathe 2.5s ease-in-out infinite;
         }
 
-        /* Offline Status: Solid Red Alert */
         .status-dot.offline {
             background-color: #ef4444;
             box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
             animation: none;
         }
 
-        /* Checking Status: Muted Yellow Glow */
         .status-dot.checking {
             background-color: #f59e0b;
             box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
             animation: none;
         }
 
-        /* Smooth Breathing Keyframe Animation */
         @keyframes breathe {
-            0% {
-                transform: scale(0.9);
-                opacity: 0.5;
-                box-shadow: 0 0 4px rgba(16, 185, 129, 0.3);
-            }
-            50% {
-                transform: scale(1.25);
-                opacity: 1;
-                box-shadow: 0 0 12px rgba(16, 185, 129, 0.9);
-            }
-            100% {
-                transform: scale(0.9);
-                opacity: 0.5;
-                box-shadow: 0 0 4px rgba(16, 185, 129, 0.3);
-            }
+            0% { transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 4px rgba(16, 185, 129, 0.3); }
+            50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 12px rgba(16, 185, 129, 0.9); }
+            100% { transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 4px rgba(16, 185, 129, 0.3); }
         }
 
-        /* Masked Password Modal Overlay */
+        /* Modal Overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -343,14 +321,9 @@
             transition: border-color 0.2s;
         }
 
-        .pin-input:focus {
-            border-color: #3b82f6;
-        }
+        .pin-input:focus { border-color: #3b82f6; }
 
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-        }
+        .modal-actions { display: flex; gap: 10px; }
 
         .modal-btn {
             flex: 1;
@@ -362,17 +335,9 @@
             cursor: pointer;
         }
 
-        .modal-btn-confirm {
-            background: #2563eb;
-            color: #ffffff;
-        }
+        .modal-btn-confirm { background: #2563eb; color: #ffffff; }
+        .modal-btn-cancel { background: rgba(255, 255, 255, 0.08); color: #94a3b8; }
 
-        .modal-btn-cancel {
-            background: rgba(255, 255, 255, 0.08);
-            color: #94a3b8;
-        }
-
-        /* Fixed Bottom-Right Fullscreen Floating Button */
         .fullscreen-btn {
             position: fixed;
             bottom: max(20px, env(safe-area-inset-bottom));
@@ -395,28 +360,11 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .fullscreen-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            color: #ffffff;
-        }
-
-        .fullscreen-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Hide exit icon by default */
-        .fullscreen-btn .icon-exit {
-            display: none;
-        }
-
-        /* Toggle icons when fullscreen active */
-        :fullscreen .fullscreen-btn .icon-enter {
-            display: none;
-        }
-
-        :fullscreen .fullscreen-btn .icon-exit {
-            display: block;
-        }
+        .fullscreen-btn:hover { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+        .fullscreen-btn:active { transform: scale(0.95); }
+        .fullscreen-btn .icon-exit { display: none; }
+        :fullscreen .fullscreen-btn .icon-enter { display: none; }
+        :fullscreen .fullscreen-btn .icon-exit { display: block; }
     </style>
 </head>
 <body>
@@ -445,13 +393,16 @@
             </a>
         </div>
 
+        <!-- Processing Console Box -->
+        <div id="consoleBox" class="console-container">> System idle. Awaiting command...</div>
+
         <div class="status-container">
             <div id="dot" class="status-dot checking"></div>
             <span id="status">Checking network...</span>
         </div>
     </div>
 
-    <!-- Masked PIN Input Modal -->
+    <!-- Security PIN Modal -->
     <div id="pinModal" class="modal-overlay">
         <div class="modal-card">
             <h3>Enter Security PIN</h3>
@@ -463,13 +414,11 @@
         </div>
     </div>
 
-    <!-- Floating Fullscreen Toggle Button -->
+    <!-- Fullscreen Floating Toggle Button -->
     <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Toggle Fullscreen">
-        <!-- Expand Brackets Icon -->
         <svg class="icon-enter" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
         </svg>
-        <!-- Restore / Minimize Icon -->
         <svg class="icon-exit" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
         </svg>
@@ -478,16 +427,41 @@
     <script>
         const GITHUB_USER = "ZahidAsif";
         const TRIGGER_GIST_ID = "YOUR_TRIGGER_GIST_ID_HERE"; // Put your Trigger Gist ID here
-
-        // EMBEDDED ENCRYPTED PAYLOAD
         const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
 
         let isActionInProgress = false;
+        let lastConsoleContent = "";
 
-        // Reliable Reachability Ping
+        function logToConsole(message) {
+            const consoleBox = document.getElementById('consoleBox');
+            consoleBox.innerText = `> ${message}`;
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        // Poll Python status updates from Gist
+        async function fetchLiveLogs() {
+            try {
+                const res = await fetch(`https://api.github.com/gists/${TRIGGER_GIST_ID}?nocache=${Date.now()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.files && data.files["status.txt"]) {
+                        const statusLog = data.files["status.txt"].content;
+                        if (statusLog !== lastConsoleContent) {
+                            lastConsoleContent = statusLog;
+                            logToConsole(statusLog);
+                        }
+                    }
+                }
+            } catch (err) {
+                // Keep subtle if network glitches
+            }
+        }
+
+        // Poll Gist every 3 seconds for log updates from your PC
+        setInterval(fetchLiveLogs, 3000);
+
         async function verifyGitHubAccess() {
             if (!navigator.onLine) return false;
-
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
 
@@ -509,10 +483,9 @@
 
             const dot = document.getElementById('dot');
             const statusText = document.getElementById('status');
-
             const hasAccess = await verifyGitHubAccess();
 
-            if (isActionInProgress) return; // Prevent overwriting upload status
+            if (isActionInProgress) return;
 
             if (hasAccess) {
                 dot.className = 'status-dot online';
@@ -523,7 +496,6 @@
             }
         }
 
-        // Periodically verify real connection every 5 seconds
         setInterval(updateConnectionStatus, 5000);
         window.addEventListener('online', updateConnectionStatus);
         window.addEventListener('offline', updateConnectionStatus);
@@ -532,7 +504,7 @@
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                    console.log(`Error attempting fullscreen: ${err.message}`);
                 });
             } else {
                 if (document.exitFullscreen) {
@@ -563,12 +535,14 @@
             isActionInProgress = true;
             dot.className = 'status-dot checking';
             status.innerText = "Authenticating...";
+            logToConsole("Authenticating PIN...");
 
             const decryptedToken = await decryptToken(pin);
 
             if (!decryptedToken) {
                 alert("Incorrect Security PIN, Sir.");
                 status.innerText = "Access Denied";
+                logToConsole("Authentication failed: Invalid PIN.");
                 dot.className = 'status-dot offline';
                 setTimeout(() => {
                     isActionInProgress = false;
@@ -606,7 +580,8 @@
             const status = document.getElementById('status');
             const dot = document.getElementById('dot');
 
-            status.innerText = "Initiating command...";
+            status.innerText = "Sending command...";
+            logToConsole("Triggering PC script via Gist...");
 
             try {
                 const gistUrl = `https://api.github.com/gists/${TRIGGER_GIST_ID}`;
@@ -620,15 +595,15 @@
                     },
                     body: JSON.stringify({
                         files: {
-                            "trigger.txt": {
-                                content: Date.now().toString()
-                            }
+                            "trigger.txt": { content: Date.now().toString() },
+                            "status.txt": { content: "Trigger sent from web. Awaiting PC response..." }
                         }
                     })
                 });
 
                 if (putRes.ok) {
-                    status.innerText = "Upload Command Sent!";
+                    status.innerText = "Command Sent!";
+                    logToConsole("Command received. Waiting for PC execution updates...");
                     dot.className = 'status-dot online';
                     setTimeout(() => {
                         isActionInProgress = false;
@@ -637,6 +612,7 @@
                 } else {
                     const err = await putRes.json().catch(() => ({}));
                     status.innerText = `Error: ${err.message || 'Unauthorized'}`;
+                    logToConsole(`Error sending command: ${err.message || 'Unauthorized'}`);
                     dot.className = 'status-dot offline';
                     setTimeout(() => {
                         isActionInProgress = false;
@@ -644,7 +620,8 @@
                     }, 3000);
                 }
             } catch (error) {
-                status.innerText = "Network Connection Error";
+                status.innerText = "Network Error";
+                logToConsole("Network Error: Failed to contact Gist API.");
                 dot.className = 'status-dot offline';
                 setTimeout(() => {
                     isActionInProgress = false;
