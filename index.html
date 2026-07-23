@@ -109,12 +109,32 @@
             gap: 8px;
         }
 
-        /* Logo scaled to match the font height of 'A' */
+        /* Logo scaled and animated to jump & flip */
         .header-logo {
-            height: 1em;
+            height: 1.1em;
             width: auto;
             display: inline-block;
             object-fit: contain;
+            
+            /* Periodic 5-Second Jump-Flip Animation */
+            animation: jumpFlip 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes jumpFlip {
+            0%, 80%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            88% {
+                /* Jumps up 12px while spinning 180 deg on Z axis */
+                transform: translateY(-12px) rotate(180deg);
+            }
+            94% {
+                /* Completes second 180 deg turn (360 deg total) coming back down */
+                transform: translateY(-3px) rotate(360deg);
+            }
+            97% {
+                transform: translateY(0) rotate(360deg);
+            }
         }
 
         .header p {
@@ -360,7 +380,7 @@
             justify-content: center;
             cursor: pointer;
             z-index: 50;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.25s ease;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
             -webkit-tap-highlight-color: transparent;
         }
@@ -368,7 +388,6 @@
         .fullscreen-btn:hover {
             background: rgba(255, 255, 255, 0.15);
             color: #ffffff;
-            transform: scale(1.05);
         }
 
         .fullscreen-btn:active {
