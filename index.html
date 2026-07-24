@@ -440,32 +440,53 @@
             consoleBox.scrollTop = consoleBox.scrollHeight;
         }
 
+        // Updated log fetcher: parses JSON array cleanly & strips '===' divider lines
         async function fetchLiveLogs() {
             if (!activeToken) return;
-
+        
             try {
                 const res = await fetch(`https://api.github.com/gists/${TRIGGER_GIST_ID}`, {
                     headers: { 'Authorization': `token ${activeToken}` },
                     cache: 'no-store'
                 });
-
+        
                 if (res.ok) {
                     const data = await res.json();
                     let outputSections = [];
-
+        
+                    // 1. Process status.txt if available
                     if (data.files && data.files["status.txt"]) {
                         const statusLog = data.files["status.txt"].content.trim();
-                        outputSections.push(`[STATUS LOG]\n${statusLog}`);
+                        // Filter out any lines made up of '==='
+                        const cleanStatus = statusLog
+                            .split("\n")
+                            .filter(line => !line.trim().startsWith("==="))
+                            .join("\n");
+                        if (cleanStatus) outputSections.push(`[STATUS LOG]\n${cleanStatus}`);
                     }
-
+        
+                    // 2. Process crps_logs.json if available
                     if (data.files && data.files["crps_logs.json"]) {
                         const rawJson = data.files["crps_logs.json"].content.trim();
                         let jsonFormatted = "";
-
+        
                         try {
                             const parsedLogs = JSON.parse(rawJson);
+                            
                             if (Array.isArray(parsedLogs)) {
-                                jsonFormatted = parsedLogs.map(item => typeof item === 'object' ? JSON.stringify(item) : item).join("\n");
+                                // Extract timestamp and message for each entry
+                                jsonFormatted = parsedLogs
+                                    .filter(item => {
+                                        const msg = item.message ? item.message.trim() : "";
+                                        // Skip lines that are just === dividers
+                                        return !msg.startsWith("===");
+                                    })
+                                    .map(item => {
+                                        const time = item.timestamp ? `[${item.timestamp}] ` : "";
+                                        const msg = item.message || "";
+                                        return `${time}${msg}`;
+                                    })
+                                    .join("\n");
                             } else if (typeof parsedLogs === 'object') {
                                 jsonFormatted = Object.entries(parsedLogs)
                                     .map(([key, val]) => `[${key}]: ${typeof val === 'object' ? JSON.stringify(val) : val}`)
@@ -474,14 +495,18 @@
                                 jsonFormatted = String(parsedLogs);
                             }
                         } catch (e) {
-                            jsonFormatted = rawJson;
+                            // Fallback filtering if JSON parsing fails
+                            jsonFormatted = rawJson
+                                .split("\n")
+                                .filter(line => !line.trim().startsWith("==="))
+                                .join("\n");
                         }
-
-                        outputSections.push(`[DETAILED LOGS]\n${jsonFormatted}`);
+        
+                        if (jsonFormatted) outputSections.push(`[DETAILED LOGS]\n${jsonFormatted}`);
                     }
-
-                    const combinedOutput = outputSections.join("\n\n========================================\n\n");
-
+        
+                    const combinedOutput = outputSections.join("\n\n----------------------------------------\n\n");
+        
                     if (combinedOutput && combinedOutput !== lastConsoleContent) {
                         lastConsoleContent = combinedOutput;
                         logToConsole(combinedOutput);
