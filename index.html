@@ -199,7 +199,6 @@
 
         .btn:active { transform: translateY(0) scale(0.98); }
 
-        /* Maximize Console Box to fill available height */
         .console-container {
             width: 100%;
             flex: 1;
@@ -397,7 +396,6 @@
             </a>
         </div>
 
-        <!-- Expanded Processing Console Box -->
         <div id="consoleBox" class="console-container">> System idle. Awaiting command...</div>
 
         <div class="status-container">
@@ -438,11 +436,11 @@
 
         function logToConsole(message) {
             const consoleBox = document.getElementById('consoleBox');
-            consoleBox.innerText = `> ${message}`;
+            consoleBox.innerText = message;
             consoleBox.scrollTop = consoleBox.scrollHeight;
         }
 
-        // Authenticated live log fetcher
+        // Fetches both status.txt AND crps_logs.json and displays them together
         async function fetchLiveLogs() {
             if (!activeToken) return;
 
@@ -454,23 +452,53 @@
 
                 if (res.ok) {
                     const data = await res.json();
+                    let outputSections = [];
+
+                    // 1. Process status.txt if available
                     if (data.files && data.files["status.txt"]) {
-                        const statusLog = data.files["status.txt"].content;
-                        if (statusLog !== lastConsoleContent) {
-                            lastConsoleContent = statusLog;
-                            logToConsole(statusLog);
+                        const statusLog = data.files["status.txt"].content.trim();
+                        outputSections.push(`[STATUS LOG]\n${statusLog}`);
+                    }
+
+                    // 2. Process crps_logs.json if available
+                    if (data.files && data.files["crps_logs.json"]) {
+                        const rawJson = data.files["crps_logs.json"].content.trim();
+                        let jsonFormatted = "";
+
+                        try {
+                            const parsedLogs = JSON.parse(rawJson);
+                            if (Array.isArray(parsedLogs)) {
+                                jsonFormatted = parsedLogs.map(item => typeof item === 'object' ? JSON.stringify(item) : item).join("\n");
+                            } else if (typeof parsedLogs === 'object') {
+                                jsonFormatted = Object.entries(parsedLogs)
+                                    .map(([key, val]) => `[${key}]: ${typeof val === 'object' ? JSON.stringify(val) : val}`)
+                                    .join("\n");
+                            } else {
+                                jsonFormatted = String(parsedLogs);
+                            }
+                        } catch (e) {
+                            jsonFormatted = rawJson; // fallback if JSON.parse fails
                         }
+
+                        outputSections.push(`[DETAILED LOGS]\n${jsonFormatted}`);
+                    }
+
+                    const combinedOutput = outputSections.join("\n\n========================================\n\n");
+
+                    if (combinedOutput && combinedOutput !== lastConsoleContent) {
+                        lastConsoleContent = combinedOutput;
+                        logToConsole(combinedOutput);
                     }
                 }
             } catch (err) {
-                // Silently handle transient errors
+                // Silently handle transient network errors
             }
         }
 
         function startLogPolling() {
             if (pollIntervalId) clearInterval(pollIntervalId);
             fetchLiveLogs();
-            pollIntervalId = setInterval(fetchLiveLogs, 4000); // Check every 4 seconds authenticated
+            pollIntervalId = setInterval(fetchLiveLogs, 4000);
         }
 
         function stopLogPolling() {
@@ -555,14 +583,14 @@
             isActionInProgress = true;
             dot.className = 'status-dot checking';
             status.innerText = "Authenticating...";
-            logToConsole("Authenticating PIN...");
+            logToConsole("> Authenticating PIN...");
 
             activeToken = await decryptToken(pin);
 
             if (!activeToken) {
                 alert("Incorrect Security PIN, Sir.");
                 status.innerText = "Access Denied";
-                logToConsole("Authentication failed: Invalid PIN.");
+                logToConsole("> Authentication failed: Invalid PIN.");
                 dot.className = 'status-dot offline';
                 setTimeout(() => {
                     isActionInProgress = false;
@@ -601,7 +629,7 @@
             const dot = document.getElementById('dot');
 
             status.innerText = "Sending command...";
-            logToConsole("Triggering PC script via Gist...");
+            logToConsole("> Triggering PC script via Gist...");
 
             try {
                 const gistUrl = `https://api.github.com/gists/${TRIGGER_GIST_ID}`;
@@ -623,10 +651,9 @@
 
                 if (putRes.ok) {
                     status.innerText = "Command Sent!";
-                    logToConsole("Command received. Waiting for PC execution updates...");
+                    logToConsole("> Command received. Waiting for PC execution updates...");
                     dot.className = 'status-dot online';
                     
-                    // Start authenticated polling after triggering command
                     startLogPolling();
 
                     setTimeout(() => {
@@ -636,7 +663,7 @@
                 } else {
                     const err = await putRes.json().catch(() => ({}));
                     status.innerText = `Error: ${err.message || 'Rate Limited'}`;
-                    logToConsole(`Error: ${err.message || 'API Limit reached. Wait 60 minutes.'}`);
+                    logToConsole(`> Error: ${err.message || 'API Limit reached. Wait 60 minutes.'}`);
                     dot.className = 'status-dot offline';
                     setTimeout(() => {
                         isActionInProgress = false;
@@ -645,7 +672,7 @@
                 }
             } catch (error) {
                 status.innerText = "Network Error";
-                logToConsole("Network Error: Failed to contact Gist API.");
+                logToConsole("> Network Error: Failed to contact Gist API.");
                 dot.className = 'status-dot offline';
                 setTimeout(() => {
                     isActionInProgress = false;
