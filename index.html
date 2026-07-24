@@ -207,17 +207,17 @@
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            padding: 12px;
+            padding: 10px;
             font-family: 'Bahnschrift', 'Segoe UI SemiBold', -apple-system, sans-serif;
-            font-size: 13px;
-            line-height: 1.45;
+            font-size: 10px;
+            line-height: 1.35;
             color: #10b981;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-word;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
             letter-spacing: 0.2px;
             scroll-behavior: smooth;
         }
@@ -444,7 +444,6 @@
             const consoleBox = document.getElementById('consoleBox');
             consoleBox.innerText = message;
             
-            // Auto-scroll to bottom so latest events are always visible
             requestAnimationFrame(() => {
                 consoleBox.scrollTop = consoleBox.scrollHeight;
             });
@@ -656,11 +655,13 @@
             const dot = document.getElementById('dot');
 
             status.innerText = "Sending command...";
-            logToConsole("> Triggering PC script via Gist...");
+            logToConsole("> Clearing old logs and sending command...");
+            lastConsoleContent = "";
 
             try {
                 const gistUrl = `https://api.github.com/gists/${TRIGGER_GIST_ID}`;
 
+                // Clear previous JSON logs and set new trigger
                 const putRes = await fetch(gistUrl, {
                     method: 'PATCH',
                     headers: {
@@ -671,14 +672,15 @@
                     body: JSON.stringify({
                         files: {
                             "trigger.txt": { content: Date.now().toString() },
-                            "status.txt": { content: "Trigger sent from web. Awaiting PC response..." }
+                            "status.txt": { content: "Trigger sent from web. Awaiting PC response..." },
+                            "crps_logs.json": { content: "[]" }
                         }
                     })
                 });
 
                 if (putRes.ok) {
                     status.innerText = "Command Sent!";
-                    logToConsole("> Command received. Waiting for PC execution updates...");
+                    logToConsole("> Old logs cleared. Waiting for PC execution updates...");
                     dot.className = 'status-dot online';
                     
                     startLogPolling();
