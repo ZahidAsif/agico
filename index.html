@@ -431,284 +431,321 @@
     </button>
 
     <script>
-        const GITHUB_USER = "ZahidAsif";
-        const TRIGGER_GIST_ID = "fd6cb36d6953fe5aceeee84ae4db86ec";
-        const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
+    const GITHUB_USER = "ZahidAsif";
+    const TRIGGER_GIST_ID = "fd6cb36d6953fe5aceeee84ae4db86ec";
+    const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
 
-        let isActionInProgress = false;
-        let activeToken = null;
-        let pollIntervalId = null;
-        let lastConsoleContent = "";
+    let isActionInProgress = false;
+    let activeToken = null;
+    let pollIntervalId = null;
+    let pollTimeoutId = null;
+    let lastConsoleContent = "";
+    let lastETag = null; // ETag header storage to prevent counting against rate limits
 
-        function logToConsole(message) {
-            const consoleBox = document.getElementById('consoleBox');
-            consoleBox.innerText = message;
-            
-            requestAnimationFrame(() => {
-                consoleBox.scrollTop = consoleBox.scrollHeight;
+    function logToConsole(message) {
+        const consoleBox = document.getElementById('consoleBox');
+        consoleBox.innerText = message;
+        
+        requestAnimationFrame(() => {
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        });
+    }
+
+    async function fetchLiveLogs() {
+        if (!activeToken) return;
+
+        const headers = { 
+            'Authorization': `token ${activeToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+        };
+
+        // Attach ETag if we have one from a previous poll
+        if (lastETag) {
+            headers['If-None-Match'] = lastETag;
+        }
+
+        try {
+            const res = await fetch(`https://api.github.com/gists/${TRIGGER_GIST_ID}`, {
+                headers: headers,
+                cache: 'no-store'
             });
-        }
 
-        async function fetchLiveLogs() {
-            if (!activeToken) return;
-
-            try {
-                const res = await fetch(`https://api.github.com/gists/${TRIGGER_GIST_ID}`, {
-                    headers: { 'Authorization': `token ${activeToken}` },
-                    cache: 'no-store'
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    let outputSections = [];
-
-                    // 1. Process status.txt
-                    if (data.files && data.files["status.txt"]) {
-                        const statusLog = data.files["status.txt"].content.trim();
-                        const cleanStatus = statusLog
-                            .split("\n")
-                            .filter(line => !line.trim().startsWith("==="))
-                            .join("\n");
-                        if (cleanStatus) outputSections.push(`[STATUS LOG]\n${cleanStatus}`);
-                    }
-
-                    // 2. Process crps_logs.json
-                    if (data.files && data.files["crps_logs.json"]) {
-                        const rawJson = data.files["crps_logs.json"].content.trim();
-                        let jsonFormatted = "";
-
-                        try {
-                            const parsedLogs = JSON.parse(rawJson);
-                            
-                            if (Array.isArray(parsedLogs)) {
-                                jsonFormatted = parsedLogs
-                                    .filter(item => {
-                                        const msg = item.message ? item.message.trim() : "";
-                                        return !msg.startsWith("===");
-                                    })
-                                    .map(item => {
-                                        const time = item.timestamp ? `[${item.timestamp}] ` : "";
-                                        const msg = item.message || "";
-                                        return `${time}${msg}`;
-                                    })
-                                    .join("\n");
-                            } else if (typeof parsedLogs === 'object') {
-                                jsonFormatted = Object.entries(parsedLogs)
-                                    .map(([key, val]) => `[${key}]: ${typeof val === 'object' ? JSON.stringify(val) : val}`)
-                                    .join("\n");
-                            } else {
-                                jsonFormatted = String(parsedLogs);
-                            }
-                        } catch (e) {
-                            jsonFormatted = rawJson
-                                .split("\n")
-                                .filter(line => !line.trim().startsWith("==="))
-                                .join("\n");
-                        }
-
-                        if (jsonFormatted) outputSections.push(`[DETAILED LOGS]\n${jsonFormatted}`);
-                    }
-
-                    const combinedOutput = outputSections.join("\n\n----------------------------------------\n\n");
-
-                    if (combinedOutput && combinedOutput !== lastConsoleContent) {
-                        lastConsoleContent = combinedOutput;
-                        logToConsole(combinedOutput);
-                    }
-                }
-            } catch (err) {
-                // Silently handle transient network errors
-            }
-        }
-
-        function startLogPolling() {
-            if (pollIntervalId) clearInterval(pollIntervalId);
-            fetchLiveLogs();
-            pollIntervalId = setInterval(fetchLiveLogs, 4000);
-        }
-
-        function stopLogPolling() {
-            if (pollIntervalId) {
-                clearInterval(pollIntervalId);
-                pollIntervalId = null;
-            }
-        }
-
-        async function verifyGitHubAccess() {
-            if (!navigator.onLine) return false;
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-            try {
-                await fetch(`https://api.github.com/users/${GITHUB_USER}`, {
-                    method: 'HEAD',
-                    cache: 'no-store',
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                return true;
-            } catch (err) {
-                return false;
-            }
-        }
-
-        async function updateConnectionStatus() {
-            if (isActionInProgress) return;
-
-            const dot = document.getElementById('dot');
-            const statusText = document.getElementById('status');
-            const hasAccess = await verifyGitHubAccess();
-
-            if (isActionInProgress) return;
-
-            if (hasAccess) {
-                dot.className = 'status-dot online';
-                statusText.innerText = "System Ready";
-            } else {
-                dot.className = 'status-dot offline';
-                statusText.innerText = "Offline";
-            }
-        }
-
-        setInterval(updateConnectionStatus, 10000);
-        window.addEventListener('online', updateConnectionStatus);
-        window.addEventListener('offline', updateConnectionStatus);
-        updateConnectionStatus();
-
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error attempting fullscreen: ${err.message}`);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        }
-
-        function openPinModal() {
-            const input = document.getElementById('pinInput');
-            input.value = '';
-            document.getElementById('pinModal').classList.add('open');
-            setTimeout(() => input.focus(), 100);
-        }
-
-        function closePinModal() {
-            document.getElementById('pinModal').classList.remove('open');
-        }
-
-        async function submitPin() {
-            const pin = document.getElementById('pinInput').value.trim();
-            closePinModal();
-            if (!pin) return;
-
-            const status = document.getElementById('status');
-            const dot = document.getElementById('dot');
-
-            isActionInProgress = true;
-            dot.className = 'status-dot checking';
-            status.innerText = "Authenticating...";
-            logToConsole("> Authenticating PIN...");
-
-            activeToken = await decryptToken(pin);
-
-            if (!activeToken) {
-                alert("Incorrect Security PIN, Sir.");
-                status.innerText = "Access Denied";
-                logToConsole("> Authentication failed: Invalid PIN.");
-                dot.className = 'status-dot offline';
-                setTimeout(() => {
-                    isActionInProgress = false;
-                    updateConnectionStatus();
-                }, 3000);
+            // If 304 Not Modified, nothing changed! Save processing & rate quota.
+            if (res.status === 304) {
                 return;
             }
 
-            await sendTrigger(activeToken);
-        }
+            if (res.ok) {
+                // Save new ETag header for future checks
+                const etag = res.headers.get('ETag');
+                if (etag) lastETag = etag;
 
-        async function decryptToken(pin) {
-            try {
-                const enc = new TextEncoder();
-                const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
-                const key = await crypto.subtle.deriveKey(
-                    { name: "PBKDF2", salt: new Uint8Array(ENCRYPTED_DATA.salt), iterations: 100000, hash: "SHA-256" },
-                    keyMaterial,
-                    { name: "AES-GCM", length: 256 },
-                    false,
-                    ["decrypt"]
-                );
-                const decrypted = await crypto.subtle.decrypt(
-                    { name: "AES-GCM", iv: new Uint8Array(ENCRYPTED_DATA.iv) },
-                    key,
-                    new Uint8Array(ENCRYPTED_DATA.ciphertext)
-                );
-                return new TextDecoder().decode(decrypted);
-            } catch (e) {
-                return null;
+                const data = await res.json();
+                let outputSections = [];
+
+                // 1. Process status.txt
+                if (data.files && data.files["status.txt"]) {
+                    const statusLog = data.files["status.txt"].content.trim();
+                    const cleanStatus = statusLog
+                        .split("\n")
+                        .filter(line => !line.trim().startsWith("==="))
+                        .join("\n");
+                    if (cleanStatus) outputSections.push(`[STATUS LOG]\n${cleanStatus}`);
+                }
+
+                // 2. Process crps_logs.json
+                if (data.files && data.files["crps_logs.json"]) {
+                    const rawJson = data.files["crps_logs.json"].content.trim();
+                    let jsonFormatted = "";
+
+                    try {
+                        const parsedLogs = JSON.parse(rawJson);
+                        
+                        if (Array.isArray(parsedLogs)) {
+                            jsonFormatted = parsedLogs
+                                .filter(item => {
+                                    const msg = item.message ? item.message.trim() : "";
+                                    return !msg.startsWith("===");
+                                })
+                                .map(item => {
+                                    const time = item.timestamp ? `[${item.timestamp}] ` : "";
+                                    const msg = item.message || "";
+                                    return `${time}${msg}`;
+                                })
+                                .join("\n");
+                        } else if (typeof parsedLogs === 'object') {
+                            jsonFormatted = Object.entries(parsedLogs)
+                                .map(([key, val]) => `[${key}]: ${typeof val === 'object' ? JSON.stringify(val) : val}`)
+                                .join("\n");
+                        } else {
+                            jsonFormatted = String(parsedLogs);
+                        }
+                    } catch (e) {
+                        jsonFormatted = rawJson
+                            .split("\n")
+                            .filter(line => !line.trim().startsWith("==="))
+                            .join("\n");
+                    }
+
+                    if (jsonFormatted) outputSections.push(`[DETAILED LOGS]\n${jsonFormatted}`);
+                }
+
+                const combinedOutput = outputSections.join("\n\n----------------------------------------\n\n");
+
+                if (combinedOutput && combinedOutput !== lastConsoleContent) {
+                    lastConsoleContent = combinedOutput;
+                    logToConsole(combinedOutput);
+                }
+            } else if (res.status === 403 || res.status === 429) {
+                logToConsole("> GitHub API Rate Limit exceeded. Polling paused.");
+                stopLogPolling();
+            }
+        } catch (err) {
+            // Silently handle transient network errors
+        }
+    }
+
+    function startLogPolling() {
+        stopLogPolling();
+        lastETag = null; // Reset ETag on new execution start
+        fetchLiveLogs();
+        
+        // Poll every 15 seconds (240 requests/hr max, well within token limits)
+        pollIntervalId = setInterval(fetchLiveLogs, 15000);
+
+        // Auto-stop polling after 10 minutes to conserve API quota
+        pollTimeoutId = setTimeout(() => {
+            stopLogPolling();
+            logToConsole(lastConsoleContent + "\n\n> Polling stopped (timeout). Trigger upload again to refresh.");
+        }, 600000);
+    }
+
+    function stopLogPolling() {
+        if (pollIntervalId) {
+            clearInterval(pollIntervalId);
+            pollIntervalId = null;
+        }
+        if (pollTimeoutId) {
+            clearTimeout(pollTimeoutId);
+            pollTimeoutId = null;
+        }
+    }
+
+    async function verifyGitHubAccess() {
+        if (!navigator.onLine) return false;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        try {
+            await fetch(`https://api.github.com/users/${GITHUB_USER}`, {
+                method: 'HEAD',
+                cache: 'no-store',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    async function updateConnectionStatus() {
+        if (isActionInProgress) return;
+
+        const dot = document.getElementById('dot');
+        const statusText = document.getElementById('status');
+        const hasAccess = await verifyGitHubAccess();
+
+        if (isActionInProgress) return;
+
+        if (hasAccess) {
+            dot.className = 'status-dot online';
+            statusText.innerText = "System Ready";
+        } else {
+            dot.className = 'status-dot offline';
+            statusText.innerText = "Offline";
+        }
+    }
+
+    // Check status every 30 seconds instead of 10 seconds to save requests
+    setInterval(updateConnectionStatus, 30000);
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+    updateConnectionStatus();
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`Error attempting fullscreen: ${err.message}`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
             }
         }
+    }
 
-        async function sendTrigger(token) {
-            const status = document.getElementById('status');
-            const dot = document.getElementById('dot');
+    function openPinModal() {
+        const input = document.getElementById('pinInput');
+        input.value = '';
+        document.getElementById('pinModal').classList.add('open');
+        setTimeout(() => input.focus(), 100);
+    }
 
-            status.innerText = "Sending command...";
-            logToConsole("> Clearing old logs and sending command...");
-            lastConsoleContent = "";
+    function closePinModal() {
+        document.getElementById('pinModal').classList.remove('open');
+    }
 
-            try {
-                const gistUrl = `https://api.github.com/gists/${TRIGGER_GIST_ID}`;
+    async function submitPin() {
+        const pin = document.getElementById('pinInput').value.trim();
+        closePinModal();
+        if (!pin) return;
 
-                // Clear previous JSON logs and set new trigger
-                const putRes = await fetch(gistUrl, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        files: {
-                            "trigger.txt": { content: Date.now().toString() },
-                            "status.txt": { content: "Trigger sent from web. Awaiting PC response..." },
-                            "crps_logs.json": { content: "[]" }
-                        }
-                    })
-                });
+        const status = document.getElementById('status');
+        const dot = document.getElementById('dot');
 
-                if (putRes.ok) {
-                    status.innerText = "Command Sent!";
-                    logToConsole("> Old logs cleared. Waiting for PC execution updates...");
-                    dot.className = 'status-dot online';
-                    
-                    startLogPolling();
+        isActionInProgress = true;
+        dot.className = 'status-dot checking';
+        status.innerText = "Authenticating...";
+        logToConsole("> Authenticating PIN...");
 
-                    setTimeout(() => {
-                        isActionInProgress = false;
-                        updateConnectionStatus();
-                    }, 3000);
-                } else {
-                    const err = await putRes.json().catch(() => ({}));
-                    status.innerText = `Error: ${err.message || 'Rate Limited'}`;
-                    logToConsole(`> Error: ${err.message || 'API Limit reached. Wait 60 minutes.'}`);
-                    dot.className = 'status-dot offline';
-                    setTimeout(() => {
-                        isActionInProgress = false;
-                        updateConnectionStatus();
-                    }, 3000);
-                }
-            } catch (error) {
-                status.innerText = "Network Error";
-                logToConsole("> Network Error: Failed to contact Gist API.");
+        activeToken = await decryptToken(pin);
+
+        if (!activeToken) {
+            alert("Incorrect Security PIN, Sir.");
+            status.innerText = "Access Denied";
+            logToConsole("> Authentication failed: Invalid PIN.");
+            dot.className = 'status-dot offline';
+            setTimeout(() => {
+                isActionInProgress = false;
+                updateConnectionStatus();
+            }, 3000);
+            return;
+        }
+
+        await sendTrigger(activeToken);
+    }
+
+    async function decryptToken(pin) {
+        try {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+            const key = await crypto.subtle.deriveKey(
+                { name: "PBKDF2", salt: new Uint8Array(ENCRYPTED_DATA.salt), iterations: 100000, hash: "SHA-256" },
+                keyMaterial,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["decrypt"]
+            );
+            const decrypted = await crypto.subtle.decrypt(
+                { name: "AES-GCM", iv: new Uint8Array(ENCRYPTED_DATA.iv) },
+                key,
+                new Uint8Array(ENCRYPTED_DATA.ciphertext)
+            );
+            return new TextDecoder().decode(decrypted);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function sendTrigger(token) {
+        const status = document.getElementById('status');
+        const dot = document.getElementById('dot');
+
+        status.innerText = "Sending command...";
+        logToConsole("> Clearing old logs and sending command...");
+        lastConsoleContent = "";
+
+        try {
+            const gistUrl = `https://api.github.com/gists/${TRIGGER_GIST_ID}`;
+
+            const putRes = await fetch(gistUrl, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    files: {
+                        "trigger.txt": { content: Date.now().toString() },
+                        "status.txt": { content: "Trigger sent from web. Awaiting PC response..." },
+                        "crps_logs.json": { content: "[]" }
+                    }
+                })
+            });
+
+            if (putRes.ok) {
+                status.innerText = "Command Sent!";
+                logToConsole("> Old logs cleared. Waiting for PC execution updates...");
+                dot.className = 'status-dot online';
+                
+                startLogPolling();
+
+                setTimeout(() => {
+                    isActionInProgress = false;
+                    updateConnectionStatus();
+                }, 3000);
+            } else {
+                const err = await putRes.json().catch(() => ({}));
+                status.innerText = `Error: ${err.message || 'Rate Limited'}`;
+                logToConsole(`> Error: ${err.message || 'API Limit reached. Wait 60 minutes.'}`);
                 dot.className = 'status-dot offline';
                 setTimeout(() => {
                     isActionInProgress = false;
                     updateConnectionStatus();
                 }, 3000);
             }
+        } catch (error) {
+            status.innerText = "Network Error";
+            logToConsole("> Network Error: Failed to contact Gist API.");
+            dot.className = 'status-dot offline';
+            setTimeout(() => {
+                isActionInProgress = false;
+                updateConnectionStatus();
+            }, 3000);
         }
-    </script>
+    }
+</script>
 </body>
 </html>
