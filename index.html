@@ -391,15 +391,15 @@
         </div>
 
         <div class="btn-group">
-            <button class="btn btn-primary" onclick="openPinModal()">
+            <button class="btn btn-primary" onclick="openPinModal('upload')">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 Upload Claims
             </button>
 
-            <a href="dashboard.html" class="btn btn-secondary">
+            <button class="btn btn-secondary" onclick="openPinModal('dashboard')">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
                 View Dashboard
-            </a>
+            </button>
         </div>
 
         <div id="consoleBox" class="console-container">> System idle. Awaiting command...</div>
@@ -440,7 +440,8 @@
     let pollIntervalId = null;
     let pollTimeoutId = null;
     let lastConsoleContent = "";
-    let lastETag = null; // ETag header storage to prevent counting against rate limits
+    let lastETag = null;
+    let pendingAction = "upload"; // Stores target action: 'upload' or 'dashboard'
 
     function logToConsole(message) {
         const consoleBox = document.getElementById('consoleBox');
@@ -459,7 +460,6 @@
             'Accept': 'application/vnd.github.v3+json'
         };
 
-        // Attach ETag if we have one from a previous poll
         if (lastETag) {
             headers['If-None-Match'] = lastETag;
         }
@@ -470,20 +470,17 @@
                 cache: 'no-store'
             });
 
-            // If 304 Not Modified, nothing changed! Save processing & rate quota.
             if (res.status === 304) {
                 return;
             }
 
             if (res.ok) {
-                // Save new ETag header for future checks
                 const etag = res.headers.get('ETag');
                 if (etag) lastETag = etag;
 
                 const data = await res.json();
                 let outputSections = [];
 
-                // 1. Process status.txt
                 if (data.files && data.files["status.txt"]) {
                     const statusLog = data.files["status.txt"].content.trim();
                     const cleanStatus = statusLog
@@ -493,7 +490,6 @@
                     if (cleanStatus) outputSections.push(`[STATUS LOG]\n${cleanStatus}`);
                 }
 
-                // 2. Process crps_logs.json
                 if (data.files && data.files["crps_logs.json"]) {
                     const rawJson = data.files["crps_logs.json"].content.trim();
                     let jsonFormatted = "";
@@ -547,13 +543,11 @@
 
     function startLogPolling() {
         stopLogPolling();
-        lastETag = null; // Reset ETag on new execution start
+        lastETag = null;
         fetchLiveLogs();
         
-        // Poll every 15 seconds (240 requests/hr max, well within token limits)
         pollIntervalId = setInterval(fetchLiveLogs, 15000);
 
-        // Auto-stop polling after 10 minutes to conserve API quota
         pollTimeoutId = setTimeout(() => {
             stopLogPolling();
             logToConsole(lastConsoleContent + "\n\n> Polling stopped (timeout). Trigger upload again to refresh.");
@@ -607,7 +601,6 @@
         }
     }
 
-    // Check status every 30 seconds instead of 10 seconds to save requests
     setInterval(updateConnectionStatus, 30000);
     window.addEventListener('online', updateConnectionStatus);
     window.addEventListener('offline', updateConnectionStatus);
@@ -625,7 +618,8 @@
         }
     }
 
-    function openPinModal() {
+    function openPinModal(action = 'upload') {
+        pendingAction = action;
         const input = document.getElementById('pinInput');
         input.value = '';
         document.getElementById('pinModal').classList.add('open');
@@ -663,7 +657,16 @@
             return;
         }
 
-        await sendTrigger(activeToken);
+        // Branching execution based on which button triggered the modal
+        if (pendingAction === 'dashboard') {
+            status.innerText = "Access Granted";
+            logToConsole("> PIN Verified. Navigating to Dashboard...");
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 500);
+        } else {
+            await sendTrigger(activeToken);
+        }
     }
 
     async function decryptToken(pin) {
