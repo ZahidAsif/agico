@@ -10,13 +10,13 @@
             --highlighter-green: #ADFF2F;
             --p-bg: rgba(45, 49, 54, 0.8); 
             --n-bg: rgba(30, 41, 59, 0.8); 
-            --header-bg: ##0d101c; 
+            --header-bg: #0d101c; 
             --text-gap: 2px; 
             --unprocessed-flash: emergency-red 0.8s infinite; 
 
             /* --- TITLE BOX VARIABLES --- */
             --title-bg-color: #0d101c;    
-            --title-height: 30px;         
+            --title-height: 34px;         
             --title-roundness: 6px;       
         }
 
@@ -39,16 +39,35 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         /* --- LAYOUT --- */
-        .wrapper { padding: 4px; width: 100%; max-width: 100%; margin: 0 auto; }
+        .wrapper { padding: 6px; width: 100%; max-width: 100%; margin: 0 auto; }
 
         .title-box { 
-            width: 100%; height: var(--title-height); background: var(--title-bg-color);
+            width: 100%; min-height: var(--title-height); background: var(--title-bg-color);
             border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--title-roundness);
-            display: flex; align-items: center; justify-content: center; margin-bottom: 8px;
+            display: flex; align-items: center; justify-content: space-between; padding: 6px 14px; margin-bottom: 8px;
+            flex-wrap: wrap; gap: 6px;
         }
 
-        .title-text { font-size: 16px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+        .title-text { font-size: 15px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.95; font-weight: 400; }
 
+        .stamp-box {
+            display: flex; align-items: center; gap: 6px; font-size: 10px; color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.5px; background: rgba(255, 255, 255, 0.04); padding: 3px 8px; border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .pulse-dot {
+            width: 7px; height: 7px; background-color: var(--highlighter-green); border-radius: 50%;
+            box-shadow: 0 0 6px var(--highlighter-green); animation: pulse 1.5s infinite;
+        }
+
+        /* --- DIAL & PILL STYLES --- */
+        .dial-svg { display: block; overflow: visible; }
+        .dial-bg { fill: none; stroke: rgba(255, 255, 255, 0.08); }
+        .dial-fill { fill: none; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease-in-out; }
+        .dial-text { fill: #ffffff; font-size: 8px; font-weight: 400; font-family: "Segoe UI", sans-serif; }
+
+        /* --- GRID & USER COLUMNS --- */
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 100%; }
 
         .col {
@@ -58,32 +77,33 @@
         }
 
         .header {
-            background: var(--header-bg); padding: 4px; text-align: center;
-            font-size: 13px; border-radius: 3px 4px 0 0; text-transform: uppercase;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: var(--header-bg); padding: 5px 8px; font-size: 13px; border-radius: 3px 4px 0 0; text-transform: uppercase;
+            border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 4px;
+        }
+
+        .header-title { font-weight: 400; letter-spacing: 0.5px; }
+
+        .user-summary-pills { display: flex; align-items: center; gap: 5px; font-size: 8px; text-transform: none; }
+
+        .user-pill {
+            display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1); color: #ccc;
+        }
+
+        .user-pill.nc { border-color: rgba(129, 161, 193, 0.4); background: rgba(30, 41, 59, 0.6); color: #81a1c1; }
+        .user-pill.pc { border-color: rgba(216, 222, 233, 0.4); background: rgba(45, 49, 54, 0.6); color: #d8dee9; }
+        .user-pill.overall {
+            background: rgba(173, 255, 47, 0.12); border-color: rgba(173, 255, 47, 0.35);
+            color: var(--highlighter-green); font-weight: 500;
         }
 
         .list { padding: 3px; display: flex; flex-direction: column; gap: 3px; }
 
-  .row {
-    display: flex; 
-    align-items: center; 
-    padding: 2px 6px;
-    border-radius: 3px; 
-    font-size: 9px; 
-    position: relative; 
-    overflow: hidden;
-    margin-bottom: 3px; /* Creates clean separation */
-    
-    /* Subtle border instead of lift */
-    border: 1px solid rgba(255, 255, 255, 0.08); 
-    
-    /* Standard depth shadow without the 'upward' movement */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
-}
-
-}
-
+        .row {
+            display: flex; align-items: center; padding: 2px 6px; border-radius: 3px; font-size: 9px; position: relative; overflow: hidden;
+            margin-bottom: 3px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+        }
 
         .n-row { background: var(--n-bg); }
         .p-row { background: var(--p-bg); }
@@ -138,7 +158,12 @@
 <div class="wrapper">
     <div class="title-box">
         <span class="title-text">Document Digitization Wing, Live Stats</span>
+        <div id="stamp-container" class="stamp-box">
+            <span class="pulse-dot"></span>
+            <span id="stamp-text">Live Sync</span>
+        </div>
     </div>
+
     <div id="main-grid" class="grid"></div>
 </div>
 
@@ -160,6 +185,24 @@
         </svg>`;
     }
 
+    function getDialSVG(pct, size = 18, strokeWidth = 2, color = 'var(--highlighter-green)', centerText = '') {
+        const radius = (size - strokeWidth) / 2;
+        const C = 2 * Math.PI * radius;
+        const offset = C - (pct / 100) * C;
+        const center = size / 2;
+        
+        return `
+        <svg class="dial-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <circle class="dial-bg" cx="${center}" cy="${center}" r="${radius}" stroke-width="${strokeWidth}"/>
+            <circle class="dial-fill" cx="${center}" cy="${center}" r="${radius}" stroke-width="${strokeWidth}"
+                    stroke="${color}"
+                    stroke-dasharray="${C.toFixed(2)}"
+                    stroke-dashoffset="${offset.toFixed(2)}"
+                    transform="rotate(-90 ${center} ${center})"/>
+            ${centerText ? `<text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" class="dial-text">${centerText}</text>` : ''}
+        </svg>`;
+    }
+
     const SVG_PATHS = [
         'M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z', // Doc
         'M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm10 12H6v-4h12v4zm2-6c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z', // Scanner
@@ -172,10 +215,49 @@
             const res = await fetch(`${URL}?t=${Date.now()}`);
             const data = await res.json();
             const container = document.getElementById('main-grid');
+            const stampElem = document.getElementById('stamp-text');
             
+            if (data.stamp) {
+                stampElem.textContent = `Sync: ${data.stamp}`;
+            }
+
+            // Parse Summary metrics from widget field
+            const userIds = Object.keys(USERS);
+            const widgetParts = (data.widget || '').split('|');
+            const userStatsMap = {};
+
+            userIds.forEach((id, idx) => {
+                if (widgetParts[idx]) {
+                    const nums = widgetParts[idx].split(',').map(n => parseInt(n.trim(), 10) || 0);
+                    userStatsMap[id] = {
+                        ncPct: nums[0],
+                        ncDone: nums[1],
+                        ncTotal: nums[2],
+                        pcPct: nums[3],
+                        pcDone: nums[4],
+                        pcTotal: nums[5],
+                        overallPct: nums[6]
+                    };
+                }
+            });
+
+            // Render Main Items Grid
             let newHtml = '';
-            Object.keys(USERS).forEach(id => {
-                if(data[id]) {
+            userIds.forEach(id => {
+                if(data[id] !== undefined) {
+                    const stats = userStatsMap[id] || { ncPct:0, ncDone:0, ncTotal:0, pcPct:0, pcDone:0, pcTotal:0, overallPct:0 };
+                    const ncPending = Math.max(0, stats.ncTotal - stats.ncDone);
+                    const pcPending = Math.max(0, stats.pcTotal - stats.pcDone);
+                    const totalDone = stats.ncDone + stats.pcDone;
+                    const totalCount = stats.ncTotal + stats.pcTotal;
+
+                    // --- FILTER OUT USERS WITH NO FILES ASSIGNED ---
+                    if (totalCount === 0 && (!data[id] || data[id].trim() === "")) {
+                        return; // Skip rendering this column
+                    }
+
+                    const userPct = totalCount > 0 ? Math.round((totalDone / totalCount) * 100) : stats.overallPct;
+
                     let listHtml = '';
                     let rawItems = data[id].split('\n').filter(l => l.trim() !== "").map(line => {
                         const m = line.match(/(.*)\[(\d{4})\]/);
@@ -212,7 +294,22 @@
                                 <div class="icons">${iconHtml}</div>
                             </div>`;
                     });
-                    newHtml += `<div class="col"><div class="header">${USERS[id]}</div><div class="list">${listHtml}</div></div>`;
+
+                    const userHeaderPills = `
+                        <div class="user-summary-pills">
+                            <span class="user-pill nc" title="NC Progress (${ncPending} pending)">${getDialSVG(stats.ncPct, 18, 2, '#81a1c1')} NC: ${stats.ncDone}/${stats.ncTotal}</span>
+                            <span class="user-pill pc" title="PC Progress (${pcPending} pending)">${getDialSVG(stats.pcPct, 18, 2, '#d8dee9')} PC: ${stats.pcDone}/${stats.pcTotal}</span>
+                            <span class="user-pill overall" title="Overall Operator Progress">${getDialSVG(userPct, 18, 2, 'var(--highlighter-green)')} ${totalDone}/${totalCount} | ${userPct}%</span>
+                        </div>`;
+
+                    newHtml += `
+                        <div class="col">
+                            <div class="header">
+                                <span class="header-title">${USERS[id]}</span>
+                                ${userHeaderPills}
+                            </div>
+                            <div class="list">${listHtml}</div>
+                        </div>`;
                 }
             });
             container.innerHTML = newHtml;
@@ -225,4 +322,3 @@
 </script>
 </body>
 </html>
-
