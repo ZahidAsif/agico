@@ -48,17 +48,76 @@
             flex-wrap: wrap; gap: 6px;
         }
 
+        .title-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
         .title-text { font-size: 15px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.95; font-weight: 400; }
 
+        .team-pill {
+            display: none; align-items: center; gap: 6px; font-size: 10px; padding: 3px 8px; border-radius: 12px;
+            background: rgba(173, 255, 47, 0.1); border: 1px solid rgba(173, 255, 47, 0.3);
+            color: var(--highlighter-green); font-weight: 400;
+        }
+
         .stamp-box {
-            display: flex; align-items: center; gap: 6px; font-size: 10px; color: rgba(255, 255, 255, 0.7);
-            letter-spacing: 0.5px; background: rgba(255, 255, 255, 0.04); padding: 3px 8px; border-radius: 12px;
+            display: flex; align-items: center; gap: 8px; font-size: 10px; color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.5px; background: rgba(255, 255, 255, 0.04); padding: 3px 10px; border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .pulse-dot {
             width: 7px; height: 7px; background-color: var(--highlighter-green); border-radius: 50%;
             box-shadow: 0 0 6px var(--highlighter-green); animation: pulse 1.5s infinite;
+        }
+
+        /* --- TOGGLE SWITCH --- */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 22px;
+            height: 12px;
+            margin-left: 2px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: .3s;
+            border-radius: 12px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 8px;
+            width: 8px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #fff;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--highlighter-green);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(10px);
+            background-color: #0d101c;
         }
 
         /* --- DIAL & PILL STYLES --- */
@@ -79,12 +138,18 @@
         .header {
             background: var(--header-bg); padding: 5px 8px; font-size: 13px; border-radius: 3px 4px 0 0; text-transform: uppercase;
             border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 4px;
+            flex-wrap: wrap; gap: 6px;
+        }
+
+        .header-title-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .header-title { font-weight: 400; letter-spacing: 0.5px; }
 
-        .user-summary-pills { display: flex; align-items: center; gap: 5px; font-size: 8px; text-transform: none; }
+        .user-summary-pills { display: none; align-items: center; gap: 5px; font-size: 8px; text-transform: none; }
 
         .user-pill {
             display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.04);
@@ -157,10 +222,17 @@
 
 <div class="wrapper">
     <div class="title-box">
-        <span class="title-text">Document Digitization Wing, Live Stats</span>
+        <div class="title-left">
+            <span class="title-text">Document Digitization Wing, Live Stats</span>
+            <div id="team-summary-pill" class="team-pill"></div>
+        </div>
         <div id="stamp-container" class="stamp-box">
             <span class="pulse-dot"></span>
-            <span id="stamp-text">Live Sync</span>
+            <span id="stamp-text">Last Synced at: --</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="stats-toggle" onchange="toggleStatsDisplay(this.checked)">
+                <span class="slider"></span>
+            </label>
         </div>
     </div>
 
@@ -172,6 +244,33 @@
     const USERS = { "u1": "SAAD", "u2": "YOUNAS", "u3": "ADEEL" };
     const ENABLE_SORT = true; 
     const ORDER = { "1110": 1, "1100": 2, "0000": 3, "0100": 4, "1000": 5, "1111": 6 };
+
+    // Track toggle state for individual users
+    const userToggleStates = {};
+
+    function formatDateString(dateObj) {
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const ddd = days[dateObj.getDay()];
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const yyyy = dateObj.getFullYear();
+        return `${dd}-${mm}-${yyyy} | ${ddd} `;
+    }
+
+    function toggleStatsDisplay(show) {
+        const pill = document.getElementById('team-summary-pill');
+        if (pill) {
+            pill.style.display = show ? 'flex' : 'none';
+        }
+    }
+
+    function toggleUserStatsDisplay(userId, show) {
+        userToggleStates[userId] = show;
+        const target = document.getElementById(`user-pills-${userId}`);
+        if (target) {
+            target.style.display = show ? 'flex' : 'none';
+        }
+    }
 
     function getStopwatchZ(isOn) {
         const color = isOn ? 'var(--highlighter-green)' : '#4a4d50';
@@ -216,9 +315,12 @@
             const data = await res.json();
             const container = document.getElementById('main-grid');
             const stampElem = document.getElementById('stamp-text');
+            const teamPillElem = document.getElementById('team-summary-pill');
             
             if (data.stamp) {
-                stampElem.textContent = `Sync: ${data.stamp}`;
+                const now = new Date();
+                const formattedDate = formatDateString(now);
+                stampElem.textContent = `Last Synced at: ${data.stamp} on ${formattedDate}`;
             }
 
             // Parse Summary metrics from widget field
@@ -226,9 +328,15 @@
             const widgetParts = (data.widget || '').split('|');
             const userStatsMap = {};
 
+            let teamTotalDone = 0;
+            let teamTotalCount = 0;
+
             userIds.forEach((id, idx) => {
                 if (widgetParts[idx]) {
                     const nums = widgetParts[idx].split(',').map(n => parseInt(n.trim(), 10) || 0);
+                    const done = nums[1] + nums[4];
+                    const total = nums[2] + nums[5];
+                    
                     userStatsMap[id] = {
                         ncPct: nums[0],
                         ncDone: nums[1],
@@ -238,8 +346,19 @@
                         pcTotal: nums[5],
                         overallPct: nums[6]
                     };
+
+                    teamTotalDone += done;
+                    teamTotalCount += total;
                 }
             });
+
+            // Update Top Header Team Progress Dial
+            const teamPct = teamTotalCount > 0 ? Math.round((teamTotalDone / teamTotalCount) * 100) : 0;
+            teamPillElem.innerHTML = `${getDialSVG(teamPct, 18, 2, 'var(--highlighter-green)')} Total Progress: ${teamTotalDone}/${teamTotalCount} (${teamPct}%)`;
+
+            // Ensure top switch position governs display state during refreshes
+            const isChecked = document.getElementById('stats-toggle').checked;
+            toggleStatsDisplay(isChecked);
 
             // Render Main Items Grid
             let newHtml = '';
@@ -295,8 +414,9 @@
                             </div>`;
                     });
 
+                    const isUserChecked = !!userToggleStates[id];
                     const userHeaderPills = `
-                        <div class="user-summary-pills">
+                        <div id="user-pills-${id}" class="user-summary-pills" style="display: ${isUserChecked ? 'flex' : 'none'};">
                             <span class="user-pill nc" title="NC Progress (${ncPending} pending)">${getDialSVG(stats.ncPct, 18, 2, '#81a1c1')} NC: ${stats.ncDone}/${stats.ncTotal}</span>
                             <span class="user-pill pc" title="PC Progress (${pcPending} pending)">${getDialSVG(stats.pcPct, 18, 2, '#d8dee9')} PC: ${stats.pcDone}/${stats.pcTotal}</span>
                             <span class="user-pill overall" title="Overall Operator Progress">${getDialSVG(userPct, 18, 2, 'var(--highlighter-green)')} ${totalDone}/${totalCount} | ${userPct}%</span>
@@ -305,7 +425,13 @@
                     newHtml += `
                         <div class="col">
                             <div class="header">
-                                <span class="header-title">${USERS[id]}</span>
+                                <div class="header-title-container">
+                                    <span class="header-title">${USERS[id]}</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" ${isUserChecked ? 'checked' : ''} onchange="toggleUserStatsDisplay('${id}', this.checked)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
                                 ${userHeaderPills}
                             </div>
                             <div class="list">${listHtml}</div>
