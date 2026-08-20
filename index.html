@@ -134,72 +134,6 @@
             letter-spacing: 0.3px;
         }
 
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 100%;
-            flex-shrink: 0;
-        }
-
-        .btn {
-            position: relative;
-            width: 100%;
-            padding: 12px 18px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 14px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            overflow: hidden;
-            letter-spacing: 0.5px;
-        }
-
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-            transition: 0.5s;
-        }
-
-        .btn:hover::after { left: 100%; }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: #ffffff;
-            box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.5);
-            border-color: rgba(255, 255, 255, 0.15);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 25px -4px rgba(37, 99, 235, 0.7);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            color: #e2e8f0;
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            transform: translateY(-2px);
-        }
-
-        .btn:active { transform: translateY(0) scale(0.98); }
-
         .console-container {
             width: 100%;
             flex: 1;
@@ -271,82 +205,6 @@
             100% { transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 4px rgba(16, 185, 129, 0.3); }
         }
 
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100dvh;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            padding: 16px;
-        }
-
-        .modal-overlay.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .modal-card {
-            background: #111827;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 20px;
-            padding: 28px 24px;
-            width: 100%;
-            max-width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-        }
-
-        .modal-card h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #f8fafc;
-            text-align: center;
-            letter-spacing: 0.4px;
-        }
-
-        .pin-input {
-            width: 100%;
-            padding: 14px;
-            font-size: 18px;
-            letter-spacing: 4px;
-            text-align: center;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .pin-input:focus { border-color: #3b82f6; }
-
-        .modal-actions { display: flex; gap: 10px; }
-
-        .modal-btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            letter-spacing: 0.3px;
-        }
-
-        .modal-btn-confirm { background: #2563eb; color: #ffffff; }
-        .modal-btn-cancel { background: rgba(255, 255, 255, 0.08); color: #94a3b8; }
-
         .fullscreen-btn {
             position: fixed;
             bottom: max(16px, env(safe-area-inset-bottom));
@@ -390,40 +248,17 @@
             <p>Document Digitization Wing</p>
         </div>
 
-        <div class="btn-group">
-            <button class="btn btn-primary" onclick="openPinModal('upload')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                Upload Claims
-            </button>
-
-            <button class="btn btn-secondary" onclick="openPinModal('dashboard')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                View Dashboard
-            </button>
-        </div>
-
-        <div id="consoleBox" class="console-container">> System idle. Awaiting command...</div>
+        <div id="consoleBox" class="console-container">> Initializing auto-upload sequence...</div>
 
         <div class="status-container">
             <div id="dot" class="status-dot checking"></div>
-            <span id="status">Checking network...</span>
-        </div>
-    </div>
-
-    <div id="pinModal" class="modal-overlay">
-        <div class="modal-card">
-            <h3>Enter Security PIN</h3>
-            <input type="password" id="pinInput" class="pin-input" placeholder="••••" autocomplete="off" onkeydown="if(event.key==='Enter') submitPin()" />
-            <div class="modal-actions">
-                <button class="modal-btn modal-btn-cancel" onclick="closePinModal()">Cancel</button>
-                <button class="modal-btn modal-btn-confirm" onclick="submitPin()">Confirm</button>
-            </div>
+            <span id="status">Initializing...</span>
         </div>
     </div>
 
     <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Toggle Fullscreen">
         <svg class="icon-enter" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2-2h3"/>
         </svg>
         <svg class="icon-exit" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
@@ -433,15 +268,15 @@
     <script>
     const GITHUB_USER = "ZahidAsif";
     const TRIGGER_GIST_ID = "fd6cb36d6953fe5aceeee84ae4db86ec";
-    const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
+    
+    // Insert your direct GitHub Personal Access Token here if required
+    const AUTH_TOKEN = "YOUR_GITHUB_TOKEN_HERE";
 
     let isActionInProgress = false;
-    let activeToken = null;
     let pollIntervalId = null;
     let pollTimeoutId = null;
     let lastConsoleContent = "";
     let lastETag = null;
-    let pendingAction = "upload"; // Stores target action: 'upload' or 'dashboard'
 
     function logToConsole(message) {
         const consoleBox = document.getElementById('consoleBox');
@@ -453,10 +288,10 @@
     }
 
     async function fetchLiveLogs() {
-        if (!activeToken) return;
+        if (!AUTH_TOKEN) return;
 
         const headers = { 
-            'Authorization': `token ${activeToken}`,
+            'Authorization': `token ${AUTH_TOKEN}`,
             'Accept': 'application/vnd.github.v3+json'
         };
 
@@ -470,9 +305,7 @@
                 cache: 'no-store'
             });
 
-            if (res.status === 304) {
-                return;
-            }
+            if (res.status === 304) return;
 
             if (res.ok) {
                 const etag = res.headers.get('ETag');
@@ -550,7 +383,7 @@
 
         pollTimeoutId = setTimeout(() => {
             stopLogPolling();
-            logToConsole(lastConsoleContent + "\n\n> Polling stopped (timeout). Trigger upload again to refresh.");
+            logToConsole(lastConsoleContent + "\n\n> Polling stopped (timeout). Refresh page to restart.");
         }, 600000);
     }
 
@@ -565,138 +398,14 @@
         }
     }
 
-    async function verifyGitHubAccess() {
-        if (!navigator.onLine) return false;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-        try {
-            await fetch(`https://api.github.com/users/${GITHUB_USER}`, {
-                method: 'HEAD',
-                cache: 'no-store',
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-            return true;
-        } catch (err) {
-            return false;
-        }
-    }
-
-    async function updateConnectionStatus() {
-        if (isActionInProgress) return;
-
-        const dot = document.getElementById('dot');
-        const statusText = document.getElementById('status');
-        const hasAccess = await verifyGitHubAccess();
-
-        if (isActionInProgress) return;
-
-        if (hasAccess) {
-            dot.className = 'status-dot online';
-            statusText.innerText = "System Ready";
-        } else {
-            dot.className = 'status-dot offline';
-            statusText.innerText = "Offline";
-        }
-    }
-
-    setInterval(updateConnectionStatus, 30000);
-    window.addEventListener('online', updateConnectionStatus);
-    window.addEventListener('offline', updateConnectionStatus);
-    updateConnectionStatus();
-
-    function toggleFullScreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.log(`Error attempting fullscreen: ${err.message}`);
-            });
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        }
-    }
-
-    function openPinModal(action = 'upload') {
-        pendingAction = action;
-        const input = document.getElementById('pinInput');
-        input.value = '';
-        document.getElementById('pinModal').classList.add('open');
-        setTimeout(() => input.focus(), 100);
-    }
-
-    function closePinModal() {
-        document.getElementById('pinModal').classList.remove('open');
-    }
-
-    async function submitPin() {
-        const pin = document.getElementById('pinInput').value.trim();
-        closePinModal();
-        if (!pin) return;
-
+    async function sendTrigger() {
         const status = document.getElementById('status');
         const dot = document.getElementById('dot');
 
         isActionInProgress = true;
         dot.className = 'status-dot checking';
-        status.innerText = "Authenticating...";
-        logToConsole("> Authenticating PIN...");
-
-        activeToken = await decryptToken(pin);
-
-        if (!activeToken) {
-            alert("Incorrect Security PIN, Sir.");
-            status.innerText = "Access Denied";
-            logToConsole("> Authentication failed: Invalid PIN.");
-            dot.className = 'status-dot offline';
-            setTimeout(() => {
-                isActionInProgress = false;
-                updateConnectionStatus();
-            }, 3000);
-            return;
-        }
-
-        // Branching execution based on which button triggered the modal
-        if (pendingAction === 'dashboard') {
-            status.innerText = "Access Granted";
-            logToConsole("> PIN Verified. Navigating to Dashboard...");
-            setTimeout(() => {
-                window.location.href = "dashboard.html";
-            }, 500);
-        } else {
-            await sendTrigger(activeToken);
-        }
-    }
-
-    async function decryptToken(pin) {
-        try {
-            const enc = new TextEncoder();
-            const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
-            const key = await crypto.subtle.deriveKey(
-                { name: "PBKDF2", salt: new Uint8Array(ENCRYPTED_DATA.salt), iterations: 100000, hash: "SHA-256" },
-                keyMaterial,
-                { name: "AES-GCM", length: 256 },
-                false,
-                ["decrypt"]
-            );
-            const decrypted = await crypto.subtle.decrypt(
-                { name: "AES-GCM", iv: new Uint8Array(ENCRYPTED_DATA.iv) },
-                key,
-                new Uint8Array(ENCRYPTED_DATA.ciphertext)
-            );
-            return new TextDecoder().decode(decrypted);
-        } catch (e) {
-            return null;
-        }
-    }
-
-    async function sendTrigger(token) {
-        const status = document.getElementById('status');
-        const dot = document.getElementById('dot');
-
         status.innerText = "Sending command...";
-        logToConsole("> Clearing old logs and sending command...");
+        logToConsole("> Automatically clearing old logs and triggering process...");
         lastConsoleContent = "";
 
         try {
@@ -705,14 +414,14 @@
             const putRes = await fetch(gistUrl, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `token ${token}`,
+                    'Authorization': `token ${AUTH_TOKEN}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     files: {
                         "trigger.txt": { content: Date.now().toString() },
-                        "status.txt": { content: "Trigger sent from web. Awaiting PC response..." },
+                        "status.txt": { content: "Trigger sent automatically on load. Awaiting PC response..." },
                         "crps_logs.json": { content: "[]" }
                     }
                 })
@@ -727,7 +436,6 @@
 
                 setTimeout(() => {
                     isActionInProgress = false;
-                    updateConnectionStatus();
                 }, 3000);
             } else {
                 const err = await putRes.json().catch(() => ({}));
@@ -736,7 +444,6 @@
                 dot.className = 'status-dot offline';
                 setTimeout(() => {
                     isActionInProgress = false;
-                    updateConnectionStatus();
                 }, 3000);
             }
         } catch (error) {
@@ -745,10 +452,26 @@
             dot.className = 'status-dot offline';
             setTimeout(() => {
                 isActionInProgress = false;
-                updateConnectionStatus();
             }, 3000);
         }
     }
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`Error attempting fullscreen: ${err.message}`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    // Automatically trigger task execution on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        sendTrigger();
+    });
 </script>
 </body>
 </html>
