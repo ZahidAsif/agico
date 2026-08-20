@@ -258,7 +258,7 @@
 
     <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Toggle Fullscreen">
         <svg class="icon-enter" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2-2h3"/>
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
         </svg>
         <svg class="icon-exit" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
@@ -268,10 +268,12 @@
     <script>
     const GITHUB_USER = "ZahidAsif";
     const TRIGGER_GIST_ID = "fd6cb36d6953fe5aceeee84ae4db86ec";
+    const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
     
-    // Insert your direct GitHub Personal Access Token here if required
-    const AUTH_TOKEN = "YOUR_GITHUB_TOKEN_HERE";
+    // Replace "1234" with your actual PIN code if different
+    const AUTO_PIN = "1234";
 
+    let activeToken = null;
     let isActionInProgress = false;
     let pollIntervalId = null;
     let pollTimeoutId = null;
@@ -287,11 +289,33 @@
         });
     }
 
+    async function decryptToken(pin) {
+        try {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+            const key = await crypto.subtle.deriveKey(
+                { name: "PBKDF2", salt: new Uint8Array(ENCRYPTED_DATA.salt), iterations: 100000, hash: "SHA-256" },
+                keyMaterial,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["decrypt"]
+            );
+            const decrypted = await crypto.subtle.decrypt(
+                { name: "AES-GCM", iv: new Uint8Array(ENCRYPTED_DATA.iv) },
+                key,
+                new Uint8Array(ENCRYPTED_DATA.ciphertext)
+            );
+            return new TextDecoder().decode(decrypted);
+        } catch (e) {
+            return null;
+        }
+    }
+
     async function fetchLiveLogs() {
-        if (!AUTH_TOKEN) return;
+        if (!activeToken) return;
 
         const headers = { 
-            'Authorization': `token ${AUTH_TOKEN}`,
+            'Authorization': `token ${activeToken}`,
             'Accept': 'application/vnd.github.v3+json'
         };
 
@@ -404,8 +428,21 @@
 
         isActionInProgress = true;
         dot.className = 'status-dot checking';
+        status.innerText = "Authenticating...";
+        logToConsole("> Decrypting credentials...");
+
+        activeToken = await decryptToken(AUTO_PIN);
+
+        if (!activeToken) {
+            status.innerText = "Access Denied";
+            logToConsole("> Decryption failed. Please update the AUTO_PIN variable with your correct PIN.");
+            dot.className = 'status-dot offline';
+            isActionInProgress = false;
+            return;
+        }
+
         status.innerText = "Sending command...";
-        logToConsole("> Automatically clearing old logs and triggering process...");
+        logToConsole("> Credentials verified. Sending trigger...");
         lastConsoleContent = "";
 
         try {
@@ -414,7 +451,7 @@
             const putRes = await fetch(gistUrl, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `token ${AUTH_TOKEN}`,
+                    'Authorization': `token ${activeToken}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
@@ -429,7 +466,7 @@
 
             if (putRes.ok) {
                 status.innerText = "Command Sent!";
-                logToConsole("> Old logs cleared. Waiting for PC execution updates...");
+                logToConsole("> Trigger sent. Waiting for PC execution updates...");
                 dot.className = 'status-dot online';
                 
                 startLogPolling();
@@ -468,7 +505,7 @@
         }
     }
 
-    // Automatically trigger task execution on page load
+    // Automatically trigger credentials decryption and send command on load
     window.addEventListener('DOMContentLoaded', () => {
         sendTrigger();
     });
