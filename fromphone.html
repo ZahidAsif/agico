@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CRPS Upload</title>
+
+    <link rel="icon" type="image/png" href="agicologo.png">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#090d16">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Bahnschrift', 'Segoe UI SemiBold', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            max-width: 100vw;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100dvh;
+            background-color: #090d16;
+            color: #ffffff;
+            user-select: none;
+            position: relative;
+            padding: 6px;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            opacity: 0.5;
+            animation: pulse 8s ease-in-out infinite alternate;
+        }
+
+        .orb-1 {
+            top: -10%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .orb-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, #059669 0%, #022c22 100%);
+            animation-delay: -4s;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1) translate(0, 0); opacity: 0.4; }
+            100% { transform: scale(1.2) translate(30px, -20px); opacity: 0.65; }
+        }
+
+        .glass-card {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px 10px;
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            max-height: calc(100dvh - 12px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2px;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 21px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            perspective: 200px;
+        }
+
+        .header-logo {
+            height: 1.1em;
+            width: auto;
+            display: inline-block;
+            object-fit: contain;
+            transform-style: preserve-3d;
+            animation: gentleDoubleSpin 5s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+        }
+
+        @keyframes gentleDoubleSpin {
+            0%, 78%, 100% { transform: translateY(0) rotateY(0deg) scale(1, 1); }
+            80% { transform: translateY(1px) rotateY(0deg) scale(1.08, 0.92); }
+            84% { transform: translateY(-8px) rotateY(360deg) scale(0.95, 1.05); }
+            88% { transform: translateY(-8px) rotateY(720deg) scale(0.98, 1.02); }
+            94% { transform: translateY(0) rotateY(720deg) scale(1, 1); }
+            96% { transform: translateY(1px) rotateY(720deg) scale(1.1, 0.9); }
+            98%, 100% { transform: translateY(0) rotateY(720deg) scale(1, 1); }
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            position: relative;
+            width: 100%;
+            padding: 12px 18px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 14px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: 0.5s;
+        }
+
+        .btn:hover::after { left: 100%; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.5);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px -4px rgba(37, 99, 235, 0.7);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e2e8f0;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .btn:active { transform: translateY(0) scale(0.98); }
+
+        .console-container {
+            width: 100%;
+            flex: 1;
+            min-height: 180px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+            font-family: 'Bahnschrift', 'Segoe UI SemiBold', -apple-system, sans-serif;
+            font-size: 10px;
+            line-height: 1.35;
+            color: #10b981;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            letter-spacing: 0.2px;
+            scroll-behavior: smooth;
+        }
+
+        .console-container::-webkit-scrollbar { width: 4px; }
+        .console-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+            min-height: 20px;
+            flex-shrink: 0;
+            letter-spacing: 0.3px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transition: all 0.4s ease;
+            background-color: #64748b;
+        }
+
+        .status-dot.online {
+            background-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+            animation: breathe 2.5s ease-in-out infinite;
+        }
+
+        .status-dot.offline {
+            background-color: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+            animation: none;
+        }
+
+        .status-dot.checking {
+            background-color: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+            animation: none;
+        }
+
+        @keyframes breathe {
+            0% { transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 4px rgba(16, 185, 129, 0.3); }
+            50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 12px rgba(16, 185, 129, 0.9); }
+            100% { transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 4px rgba(16, 185, 129, 0.3); }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 16px;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f8fafc;
+            text-align: center;
+            letter-spacing: 0.4px;
+        }
+
+        .pin-input {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            letter-spacing: 4px;
+            text-align: center;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .pin-input:focus { border-color: #3b82f6; }
+
+        .modal-actions { display: flex; gap: 10px; }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+        }
+
+        .modal-btn-confirm { background: #2563eb; color: #ffffff; }
+        .modal-btn-cancel { background: rgba(255, 255, 255, 0.08); color: #94a3b8; }
+
+        .fullscreen-btn {
+            position: fixed;
+            bottom: max(16px, env(safe-area-inset-bottom));
+            right: max(16px, env(safe-area-inset-right));
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .fullscreen-btn:hover { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+        .fullscreen-btn:active { transform: scale(0.95); }
+        .fullscreen-btn .icon-exit { display: none; }
+        :fullscreen .fullscreen-btn .icon-enter { display: none; }
+        :fullscreen .fullscreen-btn .icon-exit { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <div class="glass-card">
+        <div class="header">
+            <h1>
+                <img src="agicologo.png" alt="AGICO Logo" class="header-logo" />
+                AGICO
+            </h1>
+            <p>Document Digitization Wing</p>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="openPinModal('upload')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload Claims
+            </button>
+
+            <button class="btn btn-secondary" onclick="openPinModal('dashboard')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                View Dashboard
+            </button>
+        </div>
+
+        <div id="consoleBox" class="console-container">> System idle. Awaiting command...</div>
+
+        <div class="status-container">
+            <div id="dot" class="status-dot checking"></div>
+            <span id="status">Checking network...</span>
+        </div>
+    </div>
+
+    <div id="pinModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3>Enter Security PIN</h3>
+            <input type="password" id="pinInput" class="pin-input" placeholder="••••" autocomplete="off" onkeydown="if(event.key==='Enter') submitPin()" />
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-cancel" onclick="closePinModal()">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" onclick="submitPin()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Toggle Fullscreen">
+        <svg class="icon-enter" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+        <svg class="icon-exit" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+        </svg>
+    </button>
+
+    <script>
+    const GITHUB_USER = "ZahidAsif";
+    const TRIGGER_GIST_ID = "fd6cb36d6953fe5aceeee84ae4db86ec";
+    const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
+
+    let isActionInProgress = false;
+    let activeToken = null;
+    let pollIntervalId = null;
+    let pollTimeoutId = null;
+    let lastConsoleContent = "";
+    let lastETag = null;
+    let pendingAction = "upload"; // Stores target action: 'upload' or 'dashboard'
+
+    function logToConsole(message) {
+        const consoleBox = document.getElementById('consoleBox');
+        consoleBox.innerText = message;
+        
+        requestAnimationFrame(() => {
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        });
+    }
+
+    async function fetchLiveLogs() {
+        if (!activeToken) return;
+
+        const headers = { 
+            'Authorization': `token ${activeToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+        };
+
+        if (lastETag) {
+            headers['If-None-Match'] = lastETag;
+        }
+
+        try {
+            const res = await fetch(`https://api.github.com/gists/${TRIGGER_GIST_ID}`, {
+                headers: headers,
+                cache: 'no-store'
+            });
+
+            if (res.status === 304) {
+                return;
+            }
+
+            if (res.ok) {
+                const etag = res.headers.get('ETag');
+                if (etag) lastETag = etag;
+
+                const data = await res.json();
+                let outputSections = [];
+
+                if (data.files && data.files["status.txt"]) {
+                    const statusLog = data.files["status.txt"].content.trim();
+                    const cleanStatus = statusLog
+                        .split("\n")
+                        .filter(line => !line.trim().startsWith("==="))
+                        .join("\n");
+                    if (cleanStatus) outputSections.push(`[STATUS LOG]\n${cleanStatus}`);
+                }
+
+                if (data.files && data.files["crps_logs.json"]) {
+                    const rawJson = data.files["crps_logs.json"].content.trim();
+                    let jsonFormatted = "";
+
+                    try {
+                        const parsedLogs = JSON.parse(rawJson);
+                        
+                        if (Array.isArray(parsedLogs)) {
+                            jsonFormatted = parsedLogs
+                                .filter(item => {
+                                    const msg = item.message ? item.message.trim() : "";
+                                    return !msg.startsWith("===");
+                                })
+                                .map(item => {
+                                    const time = item.timestamp ? `[${item.timestamp}] ` : "";
+                                    const msg = item.message || "";
+                                    return `${time}${msg}`;
+                                })
+                                .join("\n");
+                        } else if (typeof parsedLogs === 'object') {
+                            jsonFormatted = Object.entries(parsedLogs)
+                                .map(([key, val]) => `[${key}]: ${typeof val === 'object' ? JSON.stringify(val) : val}`)
+                                .join("\n");
+                        } else {
+                            jsonFormatted = String(parsedLogs);
+                        }
+                    } catch (e) {
+                        jsonFormatted = rawJson
+                            .split("\n")
+                            .filter(line => !line.trim().startsWith("==="))
+                            .join("\n");
+                    }
+
+                    if (jsonFormatted) outputSections.push(`[DETAILED LOGS]\n${jsonFormatted}`);
+                }
+
+                const combinedOutput = outputSections.join("\n\n----------------------------------------\n\n");
+
+                if (combinedOutput && combinedOutput !== lastConsoleContent) {
+                    lastConsoleContent = combinedOutput;
+                    logToConsole(combinedOutput);
+                }
+            } else if (res.status === 403 || res.status === 429) {
+                logToConsole("> GitHub API Rate Limit exceeded. Polling paused.");
+                stopLogPolling();
+            }
+        } catch (err) {
+            // Silently handle transient network errors
+        }
+    }
+
+    function startLogPolling() {
+        stopLogPolling();
+        lastETag = null;
+        fetchLiveLogs();
+        
+        pollIntervalId = setInterval(fetchLiveLogs, 15000);
+
+        pollTimeoutId = setTimeout(() => {
+            stopLogPolling();
+            logToConsole(lastConsoleContent + "\n\n> Polling stopped (timeout). Trigger upload again to refresh.");
+        }, 600000);
+    }
+
+    function stopLogPolling() {
+        if (pollIntervalId) {
+            clearInterval(pollIntervalId);
+            pollIntervalId = null;
+        }
+        if (pollTimeoutId) {
+            clearTimeout(pollTimeoutId);
+            pollTimeoutId = null;
+        }
+    }
+
+    async function verifyGitHubAccess() {
+        if (!navigator.onLine) return false;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        try {
+            await fetch(`https://api.github.com/users/${GITHUB_USER}`, {
+                method: 'HEAD',
+                cache: 'no-store',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    async function updateConnectionStatus() {
+        if (isActionInProgress) return;
+
+        const dot = document.getElementById('dot');
+        const statusText = document.getElementById('status');
+        const hasAccess = await verifyGitHubAccess();
+
+        if (isActionInProgress) return;
+
+        if (hasAccess) {
+            dot.className = 'status-dot online';
+            statusText.innerText = "System Ready";
+        } else {
+            dot.className = 'status-dot offline';
+            statusText.innerText = "Offline";
+        }
+    }
+
+    setInterval(updateConnectionStatus, 30000);
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+    updateConnectionStatus();
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`Error attempting fullscreen: ${err.message}`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    function openPinModal(action = 'upload') {
+        pendingAction = action;
+        const input = document.getElementById('pinInput');
+        input.value = '';
+        document.getElementById('pinModal').classList.add('open');
+        setTimeout(() => input.focus(), 100);
+    }
+
+    function closePinModal() {
+        document.getElementById('pinModal').classList.remove('open');
+    }
+
+    async function submitPin() {
+        const pin = document.getElementById('pinInput').value.trim();
+        closePinModal();
+        if (!pin) return;
+
+        const status = document.getElementById('status');
+        const dot = document.getElementById('dot');
+
+        isActionInProgress = true;
+        dot.className = 'status-dot checking';
+        status.innerText = "Authenticating...";
+        logToConsole("> Authenticating PIN...");
+
+        activeToken = await decryptToken(pin);
+
+        if (!activeToken) {
+            alert("Incorrect Security PIN, Sir.");
+            status.innerText = "Access Denied";
+            logToConsole("> Authentication failed: Invalid PIN.");
+            dot.className = 'status-dot offline';
+            setTimeout(() => {
+                isActionInProgress = false;
+                updateConnectionStatus();
+            }, 3000);
+            return;
+        }
+
+        // Branching execution based on which button triggered the modal
+        if (pendingAction === 'dashboard') {
+            status.innerText = "Access Granted";
+            logToConsole("> PIN Verified. Navigating to Dashboard...");
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 500);
+        } else {
+            await sendTrigger(activeToken);
+        }
+    }
+
+    async function decryptToken(pin) {
+        try {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+            const key = await crypto.subtle.deriveKey(
+                { name: "PBKDF2", salt: new Uint8Array(ENCRYPTED_DATA.salt), iterations: 100000, hash: "SHA-256" },
+                keyMaterial,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["decrypt"]
+            );
+            const decrypted = await crypto.subtle.decrypt(
+                { name: "AES-GCM", iv: new Uint8Array(ENCRYPTED_DATA.iv) },
+                key,
+                new Uint8Array(ENCRYPTED_DATA.ciphertext)
+            );
+            return new TextDecoder().decode(decrypted);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function sendTrigger(token) {
+        const status = document.getElementById('status');
+        const dot = document.getElementById('dot');
+
+        status.innerText = "Sending command...";
+        logToConsole("> Clearing old logs and sending command...");
+        lastConsoleContent = "";
+
+        try {
+            const gistUrl = `https://api.github.com/gists/${TRIGGER_GIST_ID}`;
+
+            const putRes = await fetch(gistUrl, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    files: {
+                        "trigger.txt": { content: Date.now().toString() },
+                        "status.txt": { content: "Trigger sent from web. Awaiting PC response..." },
+                        "crps_logs.json": { content: "[]" }
+                    }
+                })
+            });
+
+            if (putRes.ok) {
+                status.innerText = "Command Sent!";
+                logToConsole("> Old logs cleared. Waiting for PC execution updates...");
+                dot.className = 'status-dot online';
+                
+                startLogPolling();
+
+                setTimeout(() => {
+                    isActionInProgress = false;
+                    updateConnectionStatus();
+                }, 3000);
+            } else {
+                const err = await putRes.json().catch(() => ({}));
+                status.innerText = `Error: ${err.message || 'Rate Limited'}`;
+                logToConsole(`> Error: ${err.message || 'API Limit reached. Wait 60 minutes.'}`);
+                dot.className = 'status-dot offline';
+                setTimeout(() => {
+                    isActionInProgress = false;
+                    updateConnectionStatus();
+                }, 3000);
+            }
+        } catch (error) {
+            status.innerText = "Network Error";
+            logToConsole("> Network Error: Failed to contact Gist API.");
+            dot.className = 'status-dot offline';
+            setTimeout(() => {
+                isActionInProgress = false;
+                updateConnectionStatus();
+            }, 3000);
+        }
+    }
+</script>
+</body>
+</html>
