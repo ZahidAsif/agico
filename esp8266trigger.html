@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRPS Headless Trigger</title>
+    <style>
+        body { background: #090d16; color: #10b981; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { padding: 20px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(0,0,0,0.5); font-size: 14px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="box" id="status">Initializing Headless Trigger...</div>
+
+    <script>
+        const GITHUB_USER = "ZahidAsif";
+        const TRIGGER_GIST_ID = "fd6cb36d6953fe5aceeee84ae4db86ec";
+        const ENCRYPTED_DATA = {"salt":[94,138,116,195,165,236,41,90,211,230,251,53,38,45,115,214],"iv":[124,103,194,137,148,158,223,126,203,235,18,27],"ciphertext":[3,187,132,156,248,165,138,237,221,106,54,6,76,3,85,171,143,98,244,224,242,130,104,35,116,116,228,104,132,85,118,161,173,5,46,81,64,225,144,130,213,104,0,4,122,255,68,161,2,149,215,104,89,213,34,245]};
+        
+        // Enter your decryption PIN here so it runs automatically without prompting
+        const SECURITY_PIN = "YOUR_PIN_HERE";
+
+        async function decryptToken(pin) {
+            try {
+                const enc = new TextEncoder();
+                const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+                const key = await crypto.subtle.deriveKey(
+                    { name: "PBKDF2", salt: new Uint8Array(ENCRYPTED_DATA.salt), iterations: 100000, hash: "SHA-256" },
+                    keyMaterial,
+                    { name: "AES-GCM", length: 256 },
+                    false,
+                    ["decrypt"]
+                );
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: new Uint8Array(ENCRYPTED_DATA.iv) },
+                    key,
+                    new Uint8Array(ENCRYPTED_DATA.ciphertext)
+                );
+                return new TextDecoder().decode(decrypted);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function runHeadlessTrigger() {
+            const statusBox = document.getElementById('status');
+            
+            // Checks URL parameter ?pin=XYZ first, falls back to SECURITY_PIN constant
+            const urlParams = new URLSearchParams(window.location.search);
+            const pin = urlParams.get('pin') || SECURITY_PIN;
+
+            statusBox.innerText = "Decrypting token...";
+            const token = await decryptToken(pin);
+
+            if (!token) {
+                statusBox.innerText = "ERROR: Decryption failed (Check PIN).";
+                return;
+            }
+
+            statusBox.innerText = "Sending trigger to Gist...";
+            try {
+                const gistUrl = `https://api.github.com/gists/${TRIGGER_GIST_ID}`;
+                const res = await fetch(gistUrl, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        files: {
+                            "trigger.txt": { content: Date.now().toString() },
+                            "status.txt": { content: "Trigger sent from ESP8266 headless page. Awaiting PC response..." },
+                            "crps_logs.json": { content: "[]" }
+                        }
+                    })
+                });
+
+                if (res.ok) {
+                    statusBox.innerText = "SUCCESS: Upload claims triggered!";
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    statusBox.innerText = `ERROR: ${err.message || 'API request failed'}`;
+                }
+            } catch (err) {
+                statusBox.innerText = `NETWORK ERROR: ${err.message}`;
+            }
+        }
+
+        runHeadlessTrigger();
+    </script>
+</body>
+</html>
